@@ -1,1 +1,23 @@
-[FILE_TOO_LARGE]: The combined read_files output exceeded the 1,00,000 character hard limit. This file was truncated after 0 characters. Read it separately or use code_search for the relevant section.
+import { type HTMLAttributes, forwardRef } from "react";
+import { cn } from "@/lib/utils";
+
+export interface AspectRatioProps extends HTMLAttributes<HTMLDivElement> {
+  ratio?: number;
+}
+
+const AspectRatio = forwardRef<HTMLDivElement, AspectRatioProps>(
+  ({ className, ratio = 1, ...props }, ref) => {
+    return (
+      <div
+        ref={ref}
+        className={cn("relative w-full", className)}
+        style={{ aspectRatio: ratio }}
+        {...props}
+      />
+    );
+  }
+);
+
+AspectRatio.displayName = "AspectRatio";
+
+export { AspectRatio };

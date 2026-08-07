@@ -1,1 +1,19 @@
-[FILE_TOO_LARGE]: The combined read_files output exceeded the 1,00,000 character hard limit. This file was truncated after 0 characters. Read it separately or use code_search for the relevant section.
+import { ThemeProvider as NextThemesProvider } from "next-themes";
+import type { ComponentProps } from "react";
+
+export function ThemeProvider({
+  children,
+  ...props
+}: ComponentProps<typeof NextThemesProvider>) {
+  return (
+    <NextThemesProvider
+      attribute="class"
+      defaultTheme="light"
+      forcedTheme="light"
+      disableTransitionOnChange
+      {...props}
+    >
+      {children}
+    </NextThemesProvider>
+  );
+}

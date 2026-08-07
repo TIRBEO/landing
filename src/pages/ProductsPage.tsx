@@ -177,6 +177,159 @@ export default function ProductsPage() {
             className="mt-8"
           >
             <Button asChild size="lg">
-    
+              <Link to="/#waitlist">
+                Join the waitlist <ArrowRight className="size-4" />
+              </Link>
+            </Button>
+          </motion.div>
+        </div>
+      </section>
 
-[FILE_TOO_LARGE]: The combined read_files output exceeded the 1,00,000 character hard limit. This file was truncated after 5,722 characters. Read it separately or use code_search for the relevant section.
+      {/* ================================================================ */}
+      {/* PRODUCTS */}
+      {/* ================================================================ */}
+
+      <section className="border-b-2 border-foreground">
+        <div className="mx-auto max-w-7xl px-4 py-24 sm:px-6 sm:py-32 lg:px-8">
+          <div className="grid gap-10 md:grid-cols-3">
+            {PRODUCTS.map((product) => (
+              <motion.div
+                key={product.number}
+                variants={fadeUp}
+                className="border-2 border-foreground bg-card p-8 shadow-brutal"
+              >
+                <div className={`inline-flex size-12 items-center justify-center border-2 border-foreground ${product.color} mb-6`}>
+                  {product.icon}
+                </div>
+                <span className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground">
+                  {product.tag}
+                </span>
+                <h3 className="mt-3 text-3xl font-black uppercase tracking-tight">
+                  {product.name}
+                </h3>
+                <p className="mt-4 text-sm leading-7 text-foreground/70">
+                  {product.desc}
+                </p>
+                <ul className="mt-6 space-y-3">
+                  {product.features.map((feature) => (
+                    <li key={feature} className="flex items-center gap-3 text-sm font-medium">
+                      <Check className="size-4 shrink-0" />
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ================================================================ */}
+      {/* COMPARISON */}
+      {/* ================================================================ */}
+
+      <section className="border-b-2 border-foreground bg-card">
+        <div className="mx-auto max-w-7xl px-4 py-24 sm:px-6 sm:py-32 lg:px-8">
+          <h2 className="text-5xl font-black uppercase tracking-tight sm:text-7xl">
+            Compare plans
+          </h2>
+          <div className="mt-12 overflow-hidden border-2 border-foreground">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-foreground text-background">
+                <tr>
+                  <th className="px-6 py-4 text-xs font-black uppercase tracking-[0.2em]">Feature</th>
+                  <th className="px-6 py-4 text-xs font-black uppercase tracking-[0.2em]">Tirbeo</th>
+                  <th className="px-6 py-4 text-xs font-black uppercase tracking-[0.2em]">Collab</th>
+                  <th className="px-6 py-4 text-xs font-black uppercase tracking-[0.2em]">API</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-foreground/10">
+                {COMPARISON.map(({ feature, values: [tirbeo, collab, api] }) => (
+                  <tr key={feature} className="bg-background">
+                    <td className="px-6 py-4 font-medium">{feature}</td>
+                    <td className="px-6 py-4">
+                      {tirbeo ? <Check className="size-5 text-nb-green" /> : <Minus className="size-5 text-muted-foreground" />}
+                    </td>
+                    <td className="px-6 py-4">
+                      {collab ? <Check className="size-5 text-nb-green" /> : <Minus className="size-5 text-muted-foreground" />}
+                    </td>
+                    <td className="px-6 py-4">
+                      {api ? <Check className="size-5 text-nb-green" /> : <Minus className="size-5 text-muted-foreground" />}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      {/* ================================================================ */}
+      {/* STEPS */}
+      {/* ================================================================ */}
+
+      <section className="border-b-2 border-foreground">
+        <div className="mx-auto max-w-7xl px-4 py-24 sm:px-6 sm:py-32 lg:px-8">
+          <div className="grid gap-10 md:grid-cols-3">
+            {STEPS.map((step, index) => (
+              <motion.div
+                key={step.number}
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                className={`border-2 border-foreground ${step.color} p-8 shadow-brutal`}
+              >
+                <span className="text-7xl font-black leading-none opacity-15">
+                  {step.number}
+                </span>
+                <h3 className="mt-6 text-3xl font-black uppercase tracking-tight">
+                  {step.title}
+                </h3>
+                <p className="mt-4 text-sm leading-7 text-foreground/70">
+                  {step.desc}
+                </p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ================================================================ */}
+      {/* CTA */}
+      {/* ================================================================ */}
+
+      <section id="waitlist" className="border-b-2 border-foreground bg-nb-yellow">
+        <div className="mx-auto max-w-7xl px-4 py-24 sm:px-6 sm:py-32 lg:px-8">
+          <div className="grid gap-10 lg:grid-cols-[1fr_0.5fr] lg:items-end">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.4em]">
+                Coming soon
+              </p>
+              <h2 className="mt-6 max-w-4xl text-5xl font-black uppercase leading-[0.82] tracking-tight sm:text-7xl lg:text-8xl">
+                Want to see
+                <br />
+                what&apos;s next?
+              </h2>
+              <p className="mt-7 max-w-xl text-sm leading-7 text-foreground/70 sm:text-base">
+                Tirbeo is still being built. Join the waitlist to hear
+                about early access and what&apos;s coming next.
+              </p>
+            </div>
+            <Button
+              asChild
+              className="h-auto justify-between rounded-none border-2 border-foreground bg-foreground px-6 py-5 text-xs font-black uppercase tracking-[0.3em] text-background shadow-brutal-lg"
+            >
+              <Link to="/#waitlist">
+                Join the waitlist
+                <ArrowRight className="size-4" />
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      <SiteFooter />
+    </div>
+  );
+}
