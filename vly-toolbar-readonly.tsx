@@ -404,7 +404,7 @@ export const VlyToolbar: React.FC = () => {
               <div className="flex items-center gap-3 rounded-lg border border-white/30 bg-white/95 px-4 py-3 shadow-lg">
                 <div className="flex items-center gap-2 rounded px-2 py-1 transition-colors hover:bg-white/95">
                   <div className="flex items-center gap-2">
-                    <AlertTriangle className="h-4 w-4 text-orange-500" />
+                    <AlertTriangle className="h-4 w-4 text-white" />
                     <span 
                       id="dev-env-label"
                       className="text-sm font-medium text-gray-700"
