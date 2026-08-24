@@ -12,6 +12,14 @@ export interface LandingConfig {
   waitlistAnchor: string;
 }
 
+function isLocalhost(): boolean {
+  return typeof window !== "undefined" && ["localhost", "127.0.0.1"].includes(window.location.hostname);
+}
+
+function getLoginUrl(): string {
+  return isLocalhost() ? "http://localhost:3002/login" : "https://accounts.tirbeo.app/login";
+}
+
 export const DEFAULT_CONFIG: LandingConfig = {
   brand: "Tirbeo",
   headline: "Make technology human.",
@@ -19,21 +27,19 @@ export const DEFAULT_CONFIG: LandingConfig = {
     "Tirbeo builds people-first products and experiences — cleaner workspaces, clearer conversations, and private-by-default design.",
   status: "All systems operational. Your workspace is ready.",
   videoUrl: "",
-  loginUrl: "https://accounts.tirbeo.app/login",
+  loginUrl: getLoginUrl(),
   docsUrl: "https://support.tirbeo.app/docs",
   supportUrl: "https://support.tirbeo.app",
   waitlistAnchor: "#waitlist",
 };
 
 const CACHE_KEY = "tirbeo:landing_config";
-const CACHE_TTL_MS = 1000 * 60 * 5; // 5 minutes
+const CACHE_TTL_MS = 1000 * 60 * 5;
 
 function apiBase(): string {
   const url = import.meta.env.VITE_API_URL as string | undefined;
   if (url) return url.replace(/\/$/, "");
-  if (typeof window !== "undefined" && ["localhost", "127.0.0.1"].includes(window.location.hostname)) {
-    return "http://localhost:3000";
-  }
+  if (isLocalhost()) return "http://localhost:3000";
   return "https://api.tirbeo.app";
 }
 
@@ -43,7 +49,7 @@ export function useLandingConfig(): LandingConfig {
       const raw = sessionStorage.getItem(CACHE_KEY);
       if (raw) {
         const { ts, data } = JSON.parse(raw);
-        if (Date.now() - ts < CACHE_TTL_MS) return { ...DEFAULT_CONFIG, ...data };
+        if (Date.now() - ts < CACHE_TTL_MS) return { ...DEFAULT_CONFIG, ...data, loginUrl: getLoginUrl() };
       }
     } catch {}
     return DEFAULT_CONFIG;
@@ -60,7 +66,7 @@ export function useLandingConfig(): LandingConfig {
         });
         if (!res.ok) return;
         const json = (await res.json()) as Partial<LandingConfig>;
-        const merged: LandingConfig = { ...DEFAULT_CONFIG, ...json };
+        const merged: LandingConfig = { ...DEFAULT_CONFIG, ...json, loginUrl: getLoginUrl() };
         if (!cancelled) {
           setCfg(merged);
           try {
@@ -69,10 +75,7 @@ export function useLandingConfig(): LandingConfig {
         }
       } catch {}
     })();
-    return () => {
-      cancelled = true;
-      controller.abort();
-    };
+    return () => { cancelled = true; controller.abort(); };
   }, []);
 
   return cfg;
