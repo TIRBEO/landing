@@ -13,7 +13,10 @@ export async function GET() {
 
   const clientPromise = getClient()
   if (!clientPromise) {
-    return NextResponse.json({ error: "Storage unavailable" }, { status: 500 })
+    return NextResponse.json(
+      { error: "Storage not configured (MONGODB_URI missing)" },
+      { status: 500 },
+    )
   }
 
   try {
