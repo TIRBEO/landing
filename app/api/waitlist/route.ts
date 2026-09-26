@@ -1,7 +1,7 @@
 import { promises as fs } from "node:fs"
 import path from "node:path"
 import { NextResponse } from "next/server"
-import { getClient } from "@/lib/mongodb"
+import { getClient, resetClient } from "@/lib/mongodb"
 import { clientIp, rateLimit, tooManyRequests, verifyTurnstile } from "@/lib/security"
 
 const EMAIL_RE = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/
@@ -101,22 +101,29 @@ export async function POST(request: Request) {
     const clientPromise = getClient()
 
     if (clientPromise) {
-      const client = await clientPromise
-      const result = await client.db("tirbeo").collection("waitlist").updateOne(
-        { email },
-        { $setOnInsert: { ...entry } },
-        { upsert: true }, // no duplicate emails
-      )
-      if (result.upsertedCount === 0) {
-        return NextResponse.json({ ok: true, duplicate: true }, { status: 200 })
-      }
-    } else {
-      const added = await appendToFile(entry)
-      if (!added) {
-        return NextResponse.json({ ok: true, duplicate: true }, { status: 200 })
+      try {
+        const client = await clientPromise
+        const result = await client.db("tirbeo").collection("waitlist").updateOne(
+          { email },
+          { $setOnInsert: { ...entry } },
+          { upsert: true }, // no duplicate emails
+        )
+        if (result.upsertedCount === 0) {
+          return NextResponse.json({ ok: true, duplicate: true }, { status: 200 })
+        }
+        return NextResponse.json({ ok: true }, { status: 201 })
+      } catch (err) {
+        // Mongo unreachable (DNS blip, network hiccup, cold start) —
+        // don't lose the signup: fall through to the file fallback.
+        console.error("[waitlist] Mongo unavailable, using file fallback:", err)
+        resetClient()
       }
     }
 
+    const added = await appendToFile(entry)
+    if (!added) {
+      return NextResponse.json({ ok: true, duplicate: true }, { status: 200 })
+    }
     return NextResponse.json({ ok: true }, { status: 201 })
   } catch (err) {
     console.error("[waitlist]", err)
