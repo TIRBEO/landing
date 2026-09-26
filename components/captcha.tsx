@@ -6,16 +6,20 @@ import { forwardRef } from "react"
 /**
  * Reusable Cloudflare Turnstile widget. Renders nothing when
  * NEXT_PUBLIC_TURNSTILE_SITE_KEY isn't set, or when
- * NEXT_PUBLIC_DISABLE_TURNSTILE=1 (tests / local dev),
- * so forms stay usable without a site key.
+ * NEXT_PUBLIC_DISABLE_TURNSTILE=1 (tests / local dev).
+ *
+ * Calls onToken(null) on error/expire so the parent knows the widget
+ * failed (e.g. domain not whitelisted) instead of silently never
+ * producing a token.
  */
 type Props = {
   onToken: (token: string | null) => void
+  onError?: () => void
   className?: string
 }
 
 export const Captcha = forwardRef<TurnstileInstance, Props>(function Captcha(
-  { onToken, className },
+  { onToken, onError, className },
   ref,
 ) {
   const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
@@ -29,7 +33,10 @@ export const Captcha = forwardRef<TurnstileInstance, Props>(function Captcha(
         siteKey={siteKey}
         onSuccess={(token) => onToken(token)}
         onExpire={() => onToken(null)}
-        onError={() => onToken(null)}
+        onError={() => {
+          onToken(null)
+          onError?.()
+        }}
         options={{ theme: "dark", size: "flexible" }}
       />
     </div>

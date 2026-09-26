@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import type { TurnstileInstance } from "@marsidev/react-turnstile"
-import { Download, LogOut, Lock, Mail } from "lucide-react"
+import { Download, LogOut, Mail } from "lucide-react"
 
 import { Captcha } from "@/components/captcha"
 
@@ -24,8 +24,9 @@ export default function WaitlistDetailsPage() {
   const [entries, setEntries] = useState<Entry[]>([])
   const [loading, setLoading] = useState(false)
   const [password, setPassword] = useState("")
-  const [error, setError] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [captchaToken, setCaptchaToken] = useState<string | null>(null)
+  const [captchaFailed, setCaptchaFailed] = useState(false)
   const captchaRef = useRef<TurnstileInstance>(null)
   const captchaRequired =
     Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY) &&
@@ -57,7 +58,7 @@ export default function WaitlistDetailsPage() {
 
   async function login(e: React.FormEvent) {
     e.preventDefault()
-    setError(false)
+    setError(null)
     const res = await fetch("/api/waitlist/admin", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -68,8 +69,18 @@ export default function WaitlistDetailsPage() {
       setPassword("")
       setCaptchaToken(null)
       captchaRef.current?.reset()
+    } else if (res.status === 403) {
+      // Captcha failed — most likely the widget couldn't load/verify
+      // (e.g. domain not whitelisted for the Turnstile site key).
+      setError(
+        "Verification failed — the security check couldn't complete. If this keeps happening, the captcha may not be configured for this domain.",
+      )
+      setCaptchaToken(null)
+      captchaRef.current?.reset()
+    } else if (res.status === 429) {
+      setError("Too many attempts. Wait a few minutes and try again.")
     } else {
-      setError(true)
+      setError("Wrong password.")
       setCaptchaToken(null)
       captchaRef.current?.reset()
     }
@@ -87,7 +98,7 @@ export default function WaitlistDetailsPage() {
   }
 
   return (
-    <div className="nebula grain relative isolate flex min-h-dvh flex-col">
+    <div className="grain relative isolate flex min-h-dvh flex-col">
       <main className="relative flex flex-1 flex-col px-4 pt-14 pb-16 sm:px-8 lg:px-10">
         <div className="mx-auto w-full max-w-6xl">
           <Link
@@ -97,7 +108,7 @@ export default function WaitlistDetailsPage() {
             ← Back to site
           </Link>
 
-          {/* ── Toolbar row: title, count, logout ── */}
+          {/* ── Toolbar row: title, count, actions ── */}
           <div className="mt-5 flex flex-wrap items-center justify-between gap-4 border-b border-white/15 pb-5">
             <div className="flex items-center gap-6">
               <h1 className="text-[clamp(1.6rem,4vw,2.4rem)] leading-none font-bold tracking-[-0.03em] text-white">
@@ -137,21 +148,16 @@ export default function WaitlistDetailsPage() {
           ) : !authed ? (
             <form
               onSubmit={login}
-              className="mx-auto mt-16 w-full max-w-sm rounded-2xl border border-white/15 bg-white/[0.03] p-8 sm:p-10"
+              className="mx-auto mt-24 w-full max-w-xs"
               aria-label="Admin login"
             >
-              <div className="mx-auto flex size-12 items-center justify-center rounded-full border border-accent/40 bg-accent/10">
-                <Lock className="size-5 text-accent" />
-              </div>
-              <h2 className="mt-4 text-center text-[20px] font-bold tracking-[-0.02em] text-white">
-                Restricted access<span className="text-accent">.</span>
+              <h2 className="text-center text-[20px] font-bold tracking-[-0.02em] text-white">
+                Admin login
               </h2>
               <p className="mt-1.5 text-center text-[13px] text-white/50">
-                Enter the admin password to view the waitlist.
+                Enter the admin password to continue.
               </p>
-              <label htmlFor="admin-password" className="sr-only">
-                Admin password
-              </label>
+
               <input
                 id="admin-password"
                 type="password"
@@ -159,23 +165,31 @@ export default function WaitlistDetailsPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="current-password"
                 required
-                className="mt-6 h-13 w-full rounded-lg border border-white/25 bg-black/40 px-4 py-3.5 text-[16px] text-white transition-colors placeholder:text-white/40 focus:border-accent focus:outline-none"
-                placeholder="••••••••"
+                className="mt-8 h-12 w-full border-0 border-b border-white/25 bg-transparent px-1 text-[16px] text-white transition-colors placeholder:text-white/30 focus:border-accent focus:outline-none"
+                placeholder="Password"
               />
-              <Captcha ref={captchaRef} onToken={setCaptchaToken} className="mt-5" />
+
+              <Captcha
+                ref={captchaRef}
+                onToken={setCaptchaToken}
+                onError={() => setCaptchaFailed(true)}
+                className="mt-6"
+              />
+
               <button
                 type="submit"
-                disabled={
-                  // If Turnstile is configured, require a token before submit.
-                  captchaRequired && !captchaToken
-                }
-                className="mt-4 inline-flex h-13 w-full items-center justify-center rounded-lg bg-accent py-3.5 text-[16px] font-semibold text-accent-foreground transition-all hover:brightness-110 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40"
+                disabled={captchaRequired && !captchaToken}
+                className="mt-6 inline-flex h-12 w-full items-center justify-center rounded-lg bg-accent text-[15px] font-semibold text-accent-foreground transition-all hover:brightness-110 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Unlock
               </button>
+
               {error ? (
-                <p className="mt-3 text-center text-[13px] text-[#ff5a5f]" role="alert">
-                  Wrong password.
+                <p
+                  className={`mt-4 text-center text-[13px] leading-relaxed ${error.startsWith("Verification") || error.startsWith("Too many") ? "text-amber-400/90" : "text-[#ff5a5f]"}`}
+                  role="alert"
+                >
+                  {error}
                 </p>
               ) : null}
             </form>
