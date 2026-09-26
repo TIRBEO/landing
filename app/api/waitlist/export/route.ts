@@ -1,7 +1,7 @@
 import { promises as fs } from "node:fs"
 import path from "node:path"
 import { NextResponse } from "next/server"
-import { getClient } from "@/lib/mongodb"
+import { getClient, resetClient } from "@/lib/mongodb"
 import { isAdmin } from "@/lib/security"
 
 type Entry = { email: string; createdAt: string; source: string }
@@ -43,7 +43,11 @@ export async function GET() {
     }
   } catch (err) {
     console.error("[waitlist:export]", err)
-    return NextResponse.json({ error: "Could not export waitlist" }, { status: 500 })
+    resetClient()
+    return NextResponse.json(
+      { error: "Could not export waitlist — please retry." },
+      { status: 503, headers: { "Retry-After": "2" } },
+    )
   }
 
   const rows = [

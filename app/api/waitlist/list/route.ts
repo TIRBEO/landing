@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { getClient } from "@/lib/mongodb"
+import { getClient, resetClient } from "@/lib/mongodb"
 import { isAdmin } from "@/lib/security"
 
 /**
@@ -34,7 +34,14 @@ export async function GET() {
       })),
     })
   } catch (err) {
+    // Transient Mongo errors (DNS blips, cold starts) happen — surface a
+    // retryable status and reset the cached client so the next request
+    // reconnects instead of failing on a dead handle.
     console.error("[waitlist:list]", err)
-    return NextResponse.json({ error: "Could not load waitlist" }, { status: 500 })
+    resetClient()
+    return NextResponse.json(
+      { error: "Could not load waitlist — please refresh to retry." },
+      { status: 503, headers: { "Retry-After": "2" } },
+    )
   }
 }
