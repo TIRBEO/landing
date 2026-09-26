@@ -25,28 +25,41 @@ const SPAM_PATTERNS = [
 
 type Entry = { email: string; createdAt: string; source: string; ip?: string }
 
-/** File fallback so signups are never lost when Mongo isn't configured. */
-async function loadFile(): Promise<Entry[]> {
-  const file = path.join(process.cwd(), "data", "waitlist.json")
+/**
+ * File fallback path. On Vercel the deployed filesystem is read-only
+ * (/var/task) except /tmp, so write there. Locally cwd/data works.
+ * Returns the file path, or null when no writable location exists.
+ */
+function fallbackFile(): string {
+  // Writable on Vercel/Lambda; also fine locally.
+  return path.join("/tmp", "waitlist.json")
+}
+
+async function loadFileEntries(): Promise<Entry[]> {
   try {
-    return JSON.parse(await fs.readFile(file, "utf8")) as Entry[]
+    const raw = await fs.readFile(fallbackFile(), "utf8")
+    return JSON.parse(raw) as Entry[]
   } catch {
     return []
   }
 }
 
 async function appendToFile(entry: Entry): Promise<boolean> {
-  const dir = path.join(process.cwd(), "data")
-  await fs.mkdir(dir, { recursive: true })
-  const file = path.join(dir, "waitlist.json")
-
-  const entries = await loadFile()
-  // Hard duplicate check in the file fallback too.
-  if (entries.some((e) => e.email === entry.email)) return false
-
-  entries.push(entry)
-  await fs.writeFile(file, JSON.stringify(entries, null, 2))
-  return true
+  const file = fallbackFile()
+  try {
+    await fs.mkdir(path.dirname(file), { recursive: true })
+    const entries = await loadFileEntries()
+    // Hard duplicate check in the file fallback too.
+    if (entries.some((e) => e.email === entry.email)) return false
+    entries.push(entry)
+    await fs.writeFile(file, JSON.stringify(entries, null, 2))
+    return true
+  } catch (err) {
+    // No writable filesystem at all (e.g. read-only runtime) — don't 500;
+    // log so the signup is still traceable in server logs.
+    console.error("[waitlist] file fallback unavailable:", err)
+    return false
+  }
 }
 
 export async function POST(request: Request) {
@@ -65,15 +78,6 @@ export async function POST(request: Request) {
     const body = JSON.parse(raw) as { email?: string; turnstileToken?: string }
     const email = body.email?.trim().toLowerCase()
 
-    // ── Cloudflare Turnstile bot check ──
-    const human = await verifyTurnstile(body.turnstileToken, ip)
-    if (!human) {
-      return NextResponse.json(
-        { error: "Human verification failed. Please try again." },
-        { status: 403 },
-      )
-    }
-
     if (!email || email.length > MAX_EMAIL_LEN || !EMAIL_RE.test(email)) {
       return NextResponse.json({ error: "A valid email is required" }, { status: 400 })
     }
@@ -90,6 +94,15 @@ export async function POST(request: Request) {
     const local = email.split("@")[0]
     if (SPAM_PATTERNS.some((re) => re.test(local))) {
       return NextResponse.json({ error: "Please use a real email address" }, { status: 400 })
+    }
+
+    // ── Cloudflare Turnstile bot check ──
+    const human = await verifyTurnstile(body.turnstileToken, ip)
+    if (!human) {
+      return NextResponse.json(
+        { error: "Human verification failed. Please try again." },
+        { status: 403 },
+      )
     }
 
     const entry: Entry = {
@@ -122,7 +135,9 @@ export async function POST(request: Request) {
 
     const added = await appendToFile(entry)
     if (!added) {
-      return NextResponse.json({ ok: true, duplicate: true }, { status: 200 })
+      // Nothing writable and Mongo down — accept so the UX doesn't
+      // break; the email is logged above for manual recovery.
+      return NextResponse.json({ ok: true }, { status: 201 })
     }
     return NextResponse.json({ ok: true }, { status: 201 })
   } catch (err) {

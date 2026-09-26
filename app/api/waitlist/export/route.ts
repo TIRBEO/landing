@@ -37,7 +37,8 @@ export async function GET() {
       }))
     } else {
       // File fallback (same as the signup route).
-      const file = path.join(process.cwd(), "data", "waitlist.json")
+      // File fallback — /tmp is the only writable dir on Vercel.
+      const file = path.join("/tmp", "waitlist.json")
       entries = JSON.parse(await fs.readFile(file, "utf8")) as Entry[]
     }
   } catch (err) {
