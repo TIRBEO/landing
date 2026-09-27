@@ -25,6 +25,7 @@ export default function WaitlistDetailsPage() {
   const [loading, setLoading] = useState(false)
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const [captchaToken, setCaptchaToken] = useState<string | null>(null)
   const [captchaFailed, setCaptchaFailed] = useState(false)
   const captchaRef = useRef<TurnstileInstance>(null)
@@ -40,20 +41,38 @@ export default function WaitlistDetailsPage() {
       .catch(() => setAuthed(false))
   }, [])
 
-  // Load entries once authed
+  // Load entries once authed. A failed load must NOT log the user out —
+  // show a retryable error instead.
   useEffect(() => {
     if (!authed) return
+    let cancelled = false
     setLoading(true)
-    fetch("/api/waitlist/list")
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error("unauthorized"))))
-      .then((d) => {
+    setLoadError(null)
+    const load = async (attempt: number): Promise<void> => {
+      try {
+        const res = await fetch("/api/waitlist/list")
+        if (cancelled) return
+        if (!res.ok) throw new Error(`status ${res.status}`)
+        const d = await res.json()
         setEntries(d.entries ?? [])
         setLoading(false)
-      })
-      .catch(() => {
-        setAuthed(false)
+        setLoadError(null)
+      } catch {
+        if (cancelled) return
+        // Retry up to 3 times with a short backoff — cold-start Mongo
+        // blips recover within a second or two.
+        if (attempt < 3) {
+          setTimeout(() => !cancelled && load(attempt + 1), 1200 * (attempt + 1))
+          return
+        }
         setLoading(false)
-      })
+        setLoadError("Couldn't load rows from the database. Check your connection and try again.")
+      }
+    }
+    load(0)
+    return () => {
+      cancelled = true
+    }
   }, [authed])
 
   async function login(e: React.FormEvent) {
@@ -198,6 +217,17 @@ export default function WaitlistDetailsPage() {
               {/* ── Spreadsheet-style table ── */}
               {loading ? (
                 <p className="mt-10 text-white/50">Loading rows…</p>
+              ) : loadError ? (
+                <div className="mt-8 border border-white/10 bg-white/[0.03] p-10 text-center">
+                  <p className="text-[15px] font-semibold text-white">Couldn't load rows</p>
+                  <p className="mt-1 text-[13px] text-white/50">{loadError}</p>
+                  <button
+                    onClick={() => setAuthed(false)}
+                    className="mt-5 rounded-lg border border-white/20 px-5 py-2 text-[13px] text-white/70 transition-all hover:border-white/50 hover:text-white"
+                  >
+                    Retry
+                  </button>
+                </div>
               ) : entries.length === 0 ? (
                 <div className="mt-8 border border-white/10 bg-white/[0.03] p-10 text-center">
                   <p className="text-[15px] font-semibold text-white">No rows yet</p>
