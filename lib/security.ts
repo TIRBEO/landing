@@ -134,10 +134,18 @@ export function tooManyRequests(retryAfter: number) {
 /* ── Admin token (shared with /api/waitlist/admin) ── */
 
 export const ADMIN_COOKIE = "wl_admin"
-const SECRET = process.env.ADMIN_SECRET ?? "tirbeo-waitlist-admin-v1"
+// No fallback: if ADMIN_SECRET is missing we fail loudly on first admin
+// token instead of silently signing sessions with a public constant.
+const SECRET = process.env.ADMIN_SECRET
+function requireSecret(): string {
+  if (!SECRET) {
+    throw new Error("ADMIN_SECRET is not set — admin sessions cannot be issued or verified")
+  }
+  return SECRET
+}
 
 export function sign(value: string) {
-  return createHmac("sha256", SECRET).update(value).digest("hex")
+  return createHmac("sha256", requireSecret()).update(value).digest("hex")
 }
 
 export function makeAdminToken() {
