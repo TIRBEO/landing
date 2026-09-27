@@ -36,60 +36,123 @@ export function TeamList() {
     const img = imgRef.current
     if (!photo || !img) return
 
+    // ── Preload every team photo so the FIRST hover is instant ──
+    const preloaded = members.map((m) => {
+      const i = new Image()
+      i.src = m.image
+      return i
+    })
+
     let destroyed = false
+    let raf = 0
     let removeListeners: (() => void) | undefined
 
-    import("gsap").then(({ gsap }) => {
+    const init = () => {
       if (destroyed) return
 
-      if (reduced) return
+      if (reduced) {
+        // No motion: simply show the right image near the cursor with no animation
+        const onMoveStatic = (e: MouseEvent) => {
+          photo.style.transform = `translate(${e.clientX + 24}px, ${e.clientY - 120}px)`
+        }
+        const rowsStatic = document.querySelectorAll<HTMLElement>("[data-member]")
+        const cleanupsStatic: Array<() => void> = []
+        rowsStatic.forEach((row) => {
+          const enter = () => {
+            const src = row.dataset.memberImage
+            if (src && img.getAttribute("src") !== src) img.src = src
+            photo.style.opacity = "1"
+          }
+          const leave = () => {
+            photo.style.opacity = "0"
+          }
+          row.addEventListener("mouseenter", enter)
+          row.addEventListener("mouseleave", leave)
+          window.addEventListener("mousemove", onMoveStatic, { passive: true })
+          cleanupsStatic.push(() => {
+            row.removeEventListener("mouseenter", enter)
+            row.removeEventListener("mouseleave", leave)
+          })
+        })
+        removeListeners = () => {
+          window.removeEventListener("mousemove", onMoveStatic)
+          cleanupsStatic.forEach((fn) => fn())
+        }
+        return
+      }
 
-      gsap.set(photo, { xPercent: -50, yPercent: -60, autoAlpha: 0, scale: 0.85 })
-
-      const xTo = gsap.quickTo(photo, "x", { duration: 0.5, ease: "power3.out" })
-      const yTo = gsap.quickTo(photo, "y", { duration: 0.5, ease: "power3.out" })
+      // ── Smooth cursor follow via a single rAF lerp loop (no GSAP tween
+      //    fighting, no overwrite glitches) ──
+      let tx = 0
+      let ty = 0 // target position
+      let x = 0
+      let y = 0 // current position
+      let visible = false
+      let opacity = 0
+      let scale = 0.85
 
       const onMove = (e: MouseEvent) => {
-        xTo(e.clientX)
-        yTo(e.clientY)
+        tx = e.clientX + 24
+        ty = e.clientY - 140
       }
+      window.addEventListener("mousemove", onMove, { passive: true })
 
-      const show = (src: string | null) => {
-        if (src && img.getAttribute("src") !== src) {
-          img.src = src
-          gsap.fromTo(img, { scale: 1.2 }, { scale: 1, duration: 0.5, ease: "power2.out" })
-        }
-        gsap.to(photo, { autoAlpha: 1, scale: 1, duration: 0.35, overwrite: "auto" })
+      const tick = () => {
+        if (destroyed) return
+        // ease toward the target — imperceptible lag, no jitter
+        x += (tx - x) * 0.16
+        y += (ty - y) * 0.16
+        const targetOpacity = visible ? 1 : 0
+        const targetScale = visible ? 1 : 0.85
+        opacity += (targetOpacity - opacity) * (visible ? 0.18 : 0.24)
+        scale += (targetScale - scale) * 0.16
+        photo.style.transform = `translate3d(${x}px, ${y}px, 0) scale(${scale})`
+        photo.style.opacity = opacity < 0.01 ? "0" : String(opacity)
+        raf = requestAnimationFrame(tick)
       }
-
-      const hide = () => {
-        gsap.to(photo, { autoAlpha: 0, scale: 0.85, duration: 0.3, overwrite: "auto" })
-      }
+      raf = requestAnimationFrame(tick)
 
       const rows = document.querySelectorAll<HTMLElement>("[data-member]")
-      const listeners: Array<() => void> = []
-
+      const cleanups: Array<() => void> = []
       rows.forEach((row) => {
-        const enter = () => show(row.dataset.memberImage ?? null)
-        const leave = () => hide()
+        const enter = () => {
+          const src = row.dataset.memberImage
+          if (src) {
+            // preloaded images decode instantly — no stale image flash
+            if (img.getAttribute("src") !== src) img.src = src
+            img
+              .decode?.()
+              .catch(() => {})
+              .then(() => {
+                if (!destroyed) visible = true
+              })
+            return
+          }
+          visible = true
+        }
+        const leave = () => {
+          visible = false
+        }
         row.addEventListener("mouseenter", enter)
         row.addEventListener("mouseleave", leave)
-        listeners.push(() => {
+        cleanups.push(() => {
           row.removeEventListener("mouseenter", enter)
           row.removeEventListener("mouseleave", leave)
         })
       })
 
-      window.addEventListener("mousemove", onMove)
-
       removeListeners = () => {
         window.removeEventListener("mousemove", onMove)
-        listeners.forEach((fn) => fn())
+        cleanups.forEach((fn) => fn())
       }
-    })
+    }
+
+    // init immediately — GSAP import is no longer needed
+    init()
 
     return () => {
       destroyed = true
+      if (raf) cancelAnimationFrame(raf)
       removeListeners?.()
     }
   }, [])
@@ -102,10 +165,15 @@ export function TeamList() {
       <div
         ref={photoRef}
         aria-hidden="true"
-        className="pointer-events-none fixed top-0 left-0 z-40 hidden h-60 w-48 overflow-hidden rounded-lg shadow-[0_30px_80px_rgba(0,0,0,0.7)] md:block"
+        className="pointer-events-none fixed top-0 left-0 z-40 hidden h-60 w-48 overflow-hidden rounded-lg shadow-[0_30px_80px_rgba(0,0,0,0.7)] opacity-0 will-change-transform md:block"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img ref={imgRef} alt="" className="size-full object-cover" />
+        <img
+          ref={imgRef}
+          alt=""
+          className="size-full object-cover"
+          decoding="async"
+        />
       </div>
 
       <main

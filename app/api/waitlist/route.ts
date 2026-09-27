@@ -20,7 +20,7 @@ const BLOCKED_DOMAINS = new Set([
 /** Obvious spam/junk patterns in the local part. */
 const SPAM_PATTERNS = [
   /(.)\1{6,}/, // aaaaaaa…
-  /^(?:test|asdf|qwerty|abc|aaa|xxx|admin|noreply|no-reply|spam)/i,
+  /^(?:asdf|qwerty|abc|aaa|xxx|admin|noreply|no-reply|spam)/i,
 ]
 
 type Entry = { email: string; createdAt: string; source: string; ip?: string }

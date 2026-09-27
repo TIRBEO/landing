@@ -106,13 +106,13 @@ export function LandingPage() {
       setEmail("")
       setCaptchaToken(null)
       captchaRef.current?.reset()
-      setTimeout(() => setStatus("idle"), 4000)
+      setTimeout(() => setStatus("idle"), 10_000)
     } catch {
       setStatus("idle")
       setError(true)
       setCaptchaToken(null)
       captchaRef.current?.reset()
-      setTimeout(() => setError(false), 4000)
+      setTimeout(() => setError(false), 10_000)
     }
   }
 
