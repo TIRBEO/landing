@@ -27,7 +27,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   const ip = clientIp(request)
-  const rl = await rateLimit(`admin-login:${ip}`, 5, 10 * 60 * 1000)
+  const rl = await rateLimit(`admin-login:${ip}`, 8, 10 * 60 * 1000)
   if (!rl.ok) return tooManyRequests(rl.retryAfter)
 
   let password: string | undefined

@@ -115,8 +115,12 @@ export function clientIp(request: Request): string {
 }
 
 export function tooManyRequests(retryAfter: number) {
+  const mins = Math.max(1, Math.ceil(retryAfter / 60))
   return new Response(
-    JSON.stringify({ error: "Too many requests. Try again later." }),
+    JSON.stringify({
+      error: `Too many attempts. Try again in about ${mins} minute${mins === 1 ? "" : "s"}.`,
+      retryAfter,
+    }),
     {
       status: 429,
       headers: {

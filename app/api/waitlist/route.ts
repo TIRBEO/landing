@@ -63,14 +63,30 @@ async function appendToFile(entry: Entry): Promise<boolean> {
 }
 
 export async function POST(request: Request) {
-  // ── Rate limit: 5 signups per IP per 10 minutes ──
+  // ── Rate limits (two tiers) ──
+  // Per-IP ceiling is generous so people behind shared NAT (office,
+  // campus, carrier-grade) aren't locked out; abuse is caught by the
+  // per-email cap (one address can only be attempted 3x/10min even
+  // from different IPs) and by Turnstile + spam filters.
   const ip = clientIp(request)
-  const rl = await rateLimit(`signup:${ip}`, 5, 10 * 60 * 1000)
+  const raw = await request.text()
+  let requestedEmail = ""
+  try {
+    requestedEmail =
+      (JSON.parse(raw) as { email?: string }).email?.trim().toLowerCase() ?? ""
+  } catch {
+    /* handled below by the JSON parse guard */
+  }
+
+  const rl = await rateLimit(`signup-ip:${ip}`, 20, 10 * 60 * 1000)
   if (!rl.ok) return tooManyRequests(rl.retryAfter)
+  if (requestedEmail) {
+    const rlEmail = await rateLimit(`signup-email:${requestedEmail}`, 3, 10 * 60 * 1000)
+    if (!rlEmail.ok) return tooManyRequests(rlEmail.retryAfter)
+  }
 
   try {
     // Reject oversized payloads early (cheap DoS guard).
-    const raw = await request.text()
     if (raw.length > MAX_BODY_BYTES) {
       return NextResponse.json({ error: "Payload too large" }, { status: 413 })
     }
