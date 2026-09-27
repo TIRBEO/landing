@@ -28,7 +28,7 @@ export function LandingPage() {
   const [email, setEmail] = useState("")
   const [subscribed, setSubscribed] = useState(false)
   const [status, setStatus] = useState<"idle" | "submitting" | "success">("idle")
-  const [error, setError] = useState(false)
+  const [error, setError] = useState<string | false>(false)
   const [captchaToken, setCaptchaToken] = useState<string | null>(null)
   const captchaRef = useRef<TurnstileInstance>(null)
   const captchaRequired =
@@ -100,7 +100,23 @@ export function LandingPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, turnstileToken: captchaToken }),
       })
-      if (!res.ok) throw new Error("Request failed")
+      if (!res.ok) {
+        // Show the server's own message (e.g. "Too many attempts…") when
+        // available, falling back to the generic error text otherwise.
+        let serverMsg = ""
+        try {
+          const data = (await res.json()) as { error?: string }
+          serverMsg = data.error ?? ""
+        } catch {
+          /* non-JSON error response */
+        }
+        setError(serverMsg || "Something went wrong — please try again.")
+        setStatus("idle")
+        setCaptchaToken(null)
+        captchaRef.current?.reset()
+        setTimeout(() => setError(false), 10_000)
+        return
+      }
       setStatus("success")
       setSubscribed(true)
       setEmail("")
@@ -109,7 +125,7 @@ export function LandingPage() {
       setTimeout(() => setStatus("idle"), 10_000)
     } catch {
       setStatus("idle")
-      setError(true)
+      setError("Something went wrong — please try again.")
       setCaptchaToken(null)
       captchaRef.current?.reset()
       setTimeout(() => setError(false), 10_000)
@@ -259,7 +275,7 @@ export function LandingPage() {
                 {status === "success"
                   ? "You're on the list — see you at launch."
                   : error
-                    ? "Something went wrong — please try again."
+                    ? error
                     : ""}
               </p>
             </form>
