@@ -3,7 +3,7 @@ import { Inter, JetBrains_Mono } from "next/font/google"
 import { PageTransition } from "@/components/page-transition"
 import "./globals.css"
 
-const siteUrl = "https://tirbeo.app"
+const siteUrl = "https://tirbeo.com"
 const title = "Tirbeo — Coming soon"
 const description =
   "Tirbeo is a new kind of social app, built in public from Kathmandu. Not ready yet."

@@ -8,19 +8,19 @@ const members = [
   {
     name: "Bishnu Neupane",
     role: "Founder & CEO",
-    email: "bishnuneupane@tirbeo.app",
+    email: "bishnuneupane@tirbeo.com",
     image: "/images/team/bishnu.jpg",
   },
   {
     name: "Nirajan Aryal",
     role: "Co-founder",
-    email: "nirajanaryal@tirbeo.app",
+    email: "nirajanaryal@tirbeo.com",
     image: "/images/team/nirajan.jpg",
   },
   {
     name: "Prabin Pandey",
     role: "Advisor & Manager",
-    email: "prabinpandey@tirbeo.app",
+    email: "prabinpandey@tirbeo.com",
     image: "/images/team/prabin.jpg",
   },
 ] as const
@@ -37,11 +37,10 @@ export function TeamList() {
     if (!photo || !img) return
 
     // ── Preload every team photo so the FIRST hover is instant ──
-    const preloaded = members.map((m) => {
+    for (const m of members) {
       const i = new Image()
       i.src = m.image
-      return i
-    })
+    }
 
     let destroyed = false
     let raf = 0
@@ -216,10 +215,10 @@ export function TeamList() {
           {/* ── Contact ── */}
           <div className="flex flex-col gap-6 py-20 sm:flex-row sm:items-center sm:justify-between">
             <a
-              href="mailto:hello@tirbeo.app?subject=Contact"
+              href="mailto:hello@tirbeo.com?subject=Contact"
               className="text-[clamp(1.3rem,3vw,1.9rem)] font-medium tracking-[-0.01em] text-white/60 transition-colors duration-500 hover:text-accent"
             >
-              hello@tirbeo.app
+              hello@tirbeo.com
             </a>
 
             <p className="text-[13px] text-white/50">Kathmandu, NP</p>

@@ -1,12 +1,9 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useSyncExternalStore } from "react"
 import Link from "next/link"
 
 import { LoginDevModal } from "@/components/login-dev-modal"
-
-const subscribe = () => () => {}
 
 export function Header() {
   // Login isn't open yet — show the development-phase modal instead.

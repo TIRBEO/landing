@@ -9,15 +9,7 @@ import { Captcha } from "@/components/captcha"
 
 type Entry = { email: string; createdAt: string; source: string }
 
-const fmt = (iso: string) =>
-  new Date(iso).toLocaleString("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  })
+
 
 export default function WaitlistDetailsPage() {
   const [authed, setAuthed] = useState<boolean | null>(null)
@@ -27,7 +19,7 @@ export default function WaitlistDetailsPage() {
   const [error, setError] = useState<string | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [captchaToken, setCaptchaToken] = useState<string | null>(null)
-  const [captchaFailed, setCaptchaFailed] = useState(false)
+  
   const captchaRef = useRef<TurnstileInstance>(null)
   const captchaRequired =
     Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY) &&
@@ -46,6 +38,11 @@ export default function WaitlistDetailsPage() {
   useEffect(() => {
     if (!authed) return
     let cancelled = false
+    // Resetting the load state when `authed` flips is the point of this effect:
+    // it re-runs per auth transition and must clear the previous attempt's
+    // spinner/error before retrying. Derived-state-during-render would lose
+    // that reset, so the synchronous setState is intentional here.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true)
     setLoadError(null)
     const load = async (attempt: number): Promise<void> => {
@@ -106,7 +103,10 @@ export default function WaitlistDetailsPage() {
   }
 
   function exportCsv() {
-    // Triggers a direct download from the admin-only CSV endpoint.
+    // Triggers a direct download from the admin-only CSV endpoint. This has to
+    // be a real navigation (not router.push) so the browser honours the
+    // Content-Disposition attachment response.
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination
     window.location.href = "/api/waitlist/export"
   }
 
@@ -191,7 +191,6 @@ export default function WaitlistDetailsPage() {
               <Captcha
                 ref={captchaRef}
                 onToken={setCaptchaToken}
-                onError={() => setCaptchaFailed(true)}
                 className="mt-6"
               />
 
@@ -219,7 +218,7 @@ export default function WaitlistDetailsPage() {
                 <p className="mt-10 text-white/50">Loading rows…</p>
               ) : loadError ? (
                 <div className="mt-8 border border-white/10 bg-white/[0.03] p-10 text-center">
-                  <p className="text-[15px] font-semibold text-white">Couldn't load rows</p>
+                  <p className="text-[15px] font-semibold text-white">Couldn&apos;t load rows</p>
                   <p className="mt-1 text-[13px] text-white/50">{loadError}</p>
                   <button
                     onClick={() => setAuthed(false)}

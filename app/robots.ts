@@ -6,6 +6,6 @@ export default function robots(): MetadataRoute.Robots {
       userAgent: "*",
       allow: "/",
     },
-    sitemap: "https://tirbeo.app/sitemap.xml",
+    sitemap: "https://tirbeo.com/sitemap.xml",
   }
 }

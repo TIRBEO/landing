@@ -127,7 +127,7 @@ export default function OpenGraphImage() {
             }}
           >
             <div style={{ display: "flex" }}>Not open yet.</div>
-            <div style={{ display: "flex", color: fg }}>tirbeo.app</div>
+            <div style={{ display: "flex", color: fg }}>tirbeo.com</div>
           </div>
         </div>
       </div>
