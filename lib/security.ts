@@ -185,37 +185,10 @@ export function safeEqual(a: string, b: string): boolean {
 
 /* ── Cloudflare Turnstile (bot/captcha verification) ── */
 
-const TURNSTILE_SECRET = process.env.TURNSTILE_SECRET_KEY
-const TURNSTILE_DISABLED =
-  process.env.TURNSTILE_DISABLED === "1" || // server-side kill switch
-  process.env.NEXT_PUBLIC_DISABLE_TURNSTILE === "1" // match client bypass
-const TURNSTILE_VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
-
-/**
- * Verify a Turnstile token server-side. Skips verification (returns true)
- * when TURNSTILE_SECRET_KEY is not configured, or when the disable flag
- * is set (tests / local dev), so both sides of the check are bypassed
- * together.
- */
-export async function verifyTurnstile(token: string | undefined, ip?: string): Promise<boolean> {
-  if (!TURNSTILE_SECRET || TURNSTILE_DISABLED) return true
-  if (!token) return false
-  try {
-    const body = new URLSearchParams({
-      secret: TURNSTILE_SECRET,
-      response: token,
-      ...(ip && ip !== "unknown" ? { remoteip: ip } : {}),
-    })
-    const res = await fetch(TURNSTILE_VERIFY_URL, {
-      method: "POST",
-      body,
-      // Don't let a slow Turnstile hang signup requests forever.
-      signal: AbortSignal.timeout(5_000),
-    })
-    const data = (await res.json()) as { success: boolean }
-    return data.success === true
-  } catch (err) {
-    console.error("[turnstile] verification failed", err)
-    return false
-  }
-}
+// Re-exported so existing `import { verifyTurnstile } from "@/lib/security"`
+// call sites keep working. The implementation lives in lib/turnstile.ts so the
+// site key, the secret and the disable flags are resolved in ONE place — the
+// previous split between a build-inlined client check and a runtime server
+// check is what let the widget vanish while the server kept rejecting tokens.
+export { verifyTurnstile, getTurnstileConfig, toClientConfig } from "./turnstile"
+export type { TurnstileConfig, TurnstileClientConfig } from "./turnstile"

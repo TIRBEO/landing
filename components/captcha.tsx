@@ -4,27 +4,32 @@ import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile"
 import { forwardRef } from "react"
 
 /**
- * Reusable Cloudflare Turnstile widget. Renders nothing when
- * NEXT_PUBLIC_TURNSTILE_SITE_KEY isn't set, or when
- * NEXT_PUBLIC_DISABLE_TURNSTILE=1 (tests / local dev).
+ * Reusable Cloudflare Turnstile widget.
  *
- * Calls onToken(null) on error/expire so the parent knows the widget
- * failed (e.g. domain not whitelisted) instead of silently never
- * producing a token.
+ * The site key arrives as a PROP from a server component (`getTurnstileConfig`)
+ * rather than being read from `process.env` here. Next.js inlines
+ * `NEXT_PUBLIC_*` at build time, so reading it in client code meant a key
+ * added after the first deploy rendered nothing at all — no widget, no
+ * error, and a submit button the server then rejected 100% of the time.
+ *
+ * Renders nothing when `siteKey` is empty (captcha is not enforced).
+ * `onToken(null)` fires on error/expire so the parent knows the widget failed
+ * (e.g. domain not whitelisted) instead of silently never producing a token.
  */
 type Props = {
+  /** Public site key from the server. Empty string = captcha not enforced. */
+  siteKey: string
   onToken: (token: string | null) => void
+  /** Fired when the widget itself errors — surface it to the visitor. */
   onError?: () => void
   className?: string
 }
 
 export const Captcha = forwardRef<TurnstileInstance, Props>(function Captcha(
-  { onToken, onError, className },
+  { siteKey, onToken, onError, className },
   ref,
 ) {
-  const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
-  const disabled = process.env.NEXT_PUBLIC_DISABLE_TURNSTILE === "1"
-  if (!siteKey || disabled) return null
+  if (!siteKey) return null
 
   return (
     <div className={className}>
@@ -37,7 +42,14 @@ export const Captcha = forwardRef<TurnstileInstance, Props>(function Captcha(
           onToken(null)
           onError?.()
         }}
-        options={{ theme: "dark", size: "flexible" }}
+        options={{
+          theme: "dark",
+          size: "flexible",
+          // Keep retrying instead of leaving a dead grey box when the script is
+          // blocked, the network flaps, or the domain isn't whitelisted yet.
+          retry: "auto",
+          appearance: "always",
+        }}
       />
     </div>
   )

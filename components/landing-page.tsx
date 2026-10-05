@@ -5,6 +5,7 @@ import type { TurnstileInstance } from "@marsidev/react-turnstile"
 
 import { Captcha } from "@/components/captcha"
 import { Header } from "@/components/header"
+import type { TurnstileClientConfig } from "@/lib/turnstile"
 
 /* ═══════════════════════════════════════════════════════════════════
    Landing — "COMING SOON" poster.
@@ -24,16 +25,16 @@ const SOCIALS_2 = [
   { label: "YouTube", href: "https://youtube.com/@tirbeo" },
 ]
 
-export function LandingPage() {
+export function LandingPage({ turnstile }: { turnstile: TurnstileClientConfig }) {
   const [email, setEmail] = useState("")
   const [subscribed, setSubscribed] = useState(false)
   const [status, setStatus] = useState<"idle" | "submitting" | "success">("idle")
   const [error, setError] = useState<string | false>(false)
   const [captchaToken, setCaptchaToken] = useState<string | null>(null)
+  const [captchaBroken, setCaptchaBroken] = useState(false)
   const captchaRef = useRef<TurnstileInstance>(null)
-  const captchaRequired =
-    Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY) &&
-    process.env.NEXT_PUBLIC_DISABLE_TURNSTILE !== "1"
+  // Comes from the server so the widget and the API check can never disagree.
+  const captchaRequired = turnstile.required
   const formRef = useRef<HTMLDivElement>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
   const successRef = useRef<HTMLParagraphElement>(null)
@@ -131,7 +132,6 @@ export function LandingPage() {
       setTimeout(() => setError(false), 10_000)
     }
   }
-
   return (
     <div className="grain nebula relative isolate flex min-h-dvh flex-col">
       <Header />
@@ -217,8 +217,33 @@ export function LandingPage() {
                 </span>
               </label>
 
-              {/* Cloudflare Turnstile — only rendered when a site key is configured */}
-              <Captcha ref={captchaRef} onToken={setCaptchaToken} className="mt-5" />
+              {/* Cloudflare Turnstile — only rendered when the server says a
+                  site key is configured, so it can never silently disappear. */}
+              <Captcha
+                ref={captchaRef}
+                siteKey={turnstile.siteKey}
+                // A token arriving means the widget recovered (retry: "auto"),
+                // so clear the broken banner and re-enable submit.
+                onToken={(token) => {
+                  setCaptchaToken(token)
+                  if (token) setCaptchaBroken(false)
+                }}
+                onError={() => setCaptchaBroken(true)}
+                className="mt-5"
+              />
+
+              {/* The widget failing (blocked script, un-whitelisted domain)
+                  used to be invisible: no box, no message, and a submit button
+                  that silently never enabled. Say so instead. */}
+              {captchaRequired && captchaBroken ? (
+                <p
+                  className="mt-3 text-[12px] leading-relaxed text-amber-400/90"
+                  role="alert"
+                >
+                  The security check couldn&apos;t load. Please disable an ad-blocker for
+                  this page and refresh to subscribe.
+                </p>
+              ) : null}
 
               <button
                 ref={buttonRef}
@@ -228,7 +253,7 @@ export function LandingPage() {
                   !email ||
                   !subscribed ||
                   // If Turnstile is configured, require a token before submit.
-                  (captchaRequired && !captchaToken)
+                  (captchaRequired && (!captchaToken || captchaBroken))
                 }
                 className="relative mt-5 inline-flex h-14 w-full items-center justify-center gap-2 rounded-lg bg-accent px-6 text-[16px] font-semibold whitespace-nowrap text-accent-foreground transition-colors hover:brightness-110 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40"
               >
