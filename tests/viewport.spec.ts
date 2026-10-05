@@ -11,7 +11,7 @@ const viewports = [
 for (const vp of viewports) {
   test(`no horizontal overflow on ${vp.name}`, async ({ page }) => {
     await page.setViewportSize({ width: vp.width, height: vp.height })
-    for (const path of ["/", "/teams"]) {
+    for (const path of ["/", "/teams", "/privacy", "/accessibility", "/waitlist/details"]) {
       await page.goto(path)
       const overflow = await page.evaluate(
         () => document.documentElement.scrollWidth - document.documentElement.clientWidth,

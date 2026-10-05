@@ -14,5 +14,17 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "yearly",
       priority: 0.6,
     },
+    {
+      url: "https://tirbeo.com/privacy",
+      lastModified: new Date("2026-10-05"),
+      changeFrequency: "yearly",
+      priority: 0.3,
+    },
+    {
+      url: "https://tirbeo.com/accessibility",
+      lastModified: new Date("2026-10-05"),
+      changeFrequency: "yearly",
+      priority: 0.3,
+    },
   ]
 }

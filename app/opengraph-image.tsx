@@ -9,7 +9,7 @@ export const contentType = "image/png"
 
 const bg = "#000000"
 const fg = "#f4f4f2"
-const muted = "#9a968e"
+const muted = "#8c8c8c"
 const accent = "#ffffff"
 const hairline = `${fg}33`
 
@@ -56,7 +56,6 @@ export default function OpenGraphImage() {
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  borderRadius: 10,
                   background: accent,
                   color: bg,
                   fontSize: 19,
@@ -86,10 +85,10 @@ export default function OpenGraphImage() {
               <div
                 style={{
                   display: "flex",
-                  fontSize: 116,
+                  fontSize: 112,
                   lineHeight: 1,
                   letterSpacing: "-6px",
-                  fontWeight: 700,
+                  fontWeight: 800,
                   whiteSpace: "nowrap",
                 }}
               >
@@ -107,7 +106,7 @@ export default function OpenGraphImage() {
               }}
             >
               <div style={{ flex: 1, display: "flex", height: 2, background: hairline }} />
-              <div style={{ display: "flex", fontSize: 116, lineHeight: 1, letterSpacing: "-6px", fontWeight: 700, whiteSpace: "nowrap" }}>
+              <div style={{ display: "flex", fontSize: 112, lineHeight: 1, letterSpacing: "-6px", fontWeight: 700, whiteSpace: "nowrap" }}>
                 <span>soon</span>
                 <span style={{ color: accent }}>.</span>
               </div>

@@ -44,21 +44,21 @@ async function loadFileEntries(): Promise<Entry[]> {
   }
 }
 
-async function appendToFile(entry: Entry): Promise<boolean> {
+async function appendToFile(entry: Entry): Promise<"added" | "duplicate" | "failed"> {
   const file = fallbackFile()
   try {
     await fs.mkdir(path.dirname(file), { recursive: true })
     const entries = await loadFileEntries()
     // Hard duplicate check in the file fallback too.
-    if (entries.some((e) => e.email === entry.email)) return false
+    if (entries.some((e) => e.email === entry.email)) return "duplicate"
     entries.push(entry)
     await fs.writeFile(file, JSON.stringify(entries, null, 2))
-    return true
+    return "added"
   } catch (err) {
     // No writable filesystem at all (e.g. read-only runtime) — don't 500;
     // log so the signup is still traceable in server logs.
     console.error("[waitlist] file fallback unavailable:", err)
-    return false
+    return "failed"
   }
 }
 
@@ -91,7 +91,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Payload too large" }, { status: 413 })
     }
 
-    const body = JSON.parse(raw) as { email?: string; turnstileToken?: string }
+    const body = JSON.parse(raw) as {
+      email?: string
+      turnstileToken?: string
+      captchaUnavailable?: boolean
+    }
     const email = body.email?.trim().toLowerCase()
 
     if (!email || email.length > MAX_EMAIL_LEN || !EMAIL_RE.test(email)) {
@@ -113,7 +117,12 @@ export async function POST(request: Request) {
     }
 
     // ── Cloudflare Turnstile bot check ──
-    const human = await verifyTurnstile(body.turnstileToken, ip)
+    // A widget that could not run (site key not allowed for this hostname)
+    // reports `captchaUnavailable` and is accepted without a token — otherwise
+    // a server-side Cloudflare misconfig would 403 every real signup forever.
+    const human = await verifyTurnstile(body.turnstileToken, ip, {
+      captchaUnavailable: body.captchaUnavailable === true,
+    })
     if (!human) {
       return NextResponse.json(
         { error: "Human verification failed. Please try again." },
@@ -149,12 +158,15 @@ export async function POST(request: Request) {
       }
     }
 
-    const added = await appendToFile(entry)
-    if (!added) {
-      // Nothing writable and Mongo down — accept so the UX doesn't
-      // break; the email is logged above for manual recovery.
-      return NextResponse.json({ ok: true }, { status: 201 })
+    // Mirror the Mongo path's contract: a repeat address is a successful
+    // no-op flagged as `duplicate`, never a new 201. Collapsing these two
+    // cases used to hide duplicates whenever Mongo was unavailable.
+    const result = await appendToFile(entry)
+    if (result === "duplicate") {
+      return NextResponse.json({ ok: true, duplicate: true }, { status: 200 })
     }
+    // `failed` = nothing writable and Mongo down. Accept so the UX doesn't
+    // break; the email is logged above for manual recovery.
     return NextResponse.json({ ok: true }, { status: 201 })
   } catch (err) {
     console.error("[waitlist]", err)

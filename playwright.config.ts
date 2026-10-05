@@ -11,7 +11,12 @@ export default defineConfig({
     // Tests run with Turnstile disabled on both client (widget hidden,
     // headless browsers can't pass a real challenge) and server
     // (verification skipped). Admin password comes from the env.
-    command: "NEXT_PUBLIC_DISABLE_TURNSTILE=1 TURNSTILE_DISABLED=1 pnpm dev --port 3003",
+    //
+    // MONGODB_URI is deliberately blanked: the specs POST to /api/waitlist, and
+    // with the real URI loaded from .env.local they were inserting `test@…`
+    // rows straight into the production waitlist on every run.
+    command:
+      "NEXT_PUBLIC_DISABLE_TURNSTILE=1 TURNSTILE_DISABLED=1 MONGODB_URI= pnpm dev --port 3003",
     url: "http://localhost:3003",
     reuseExistingServer: true,
     timeout: 60_000,

@@ -32,16 +32,22 @@ export async function POST(request: Request) {
 
   let password: string | undefined
   let turnstileToken: string | undefined
+  let captchaUnavailable = false
   try {
-    const body = (await request.json()) as { password?: string; turnstileToken?: string }
+    const body = (await request.json()) as {
+      password?: string
+      turnstileToken?: string
+      captchaUnavailable?: boolean
+    }
     password = body.password
     turnstileToken = body.turnstileToken
+    captchaUnavailable = body.captchaUnavailable === true
   } catch {
     return NextResponse.json({ error: "Bad request" }, { status: 400 })
   }
 
   // ── Cloudflare Turnstile bot check ──
-  const human = await verifyTurnstile(turnstileToken, ip)
+  const human = await verifyTurnstile(turnstileToken, ip, { captchaUnavailable })
   if (!human) {
     return NextResponse.json(
       { error: "Human verification failed. Please try again." },

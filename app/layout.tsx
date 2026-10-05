@@ -33,7 +33,7 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   colorScheme: "dark",
-  themeColor: "#060403",
+  themeColor: "#000000",
 }
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
@@ -43,7 +43,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         {/* bg paints before CSS arrives, so a hard refresh never flashes white */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `document.documentElement.style.background="#060403"`,
+            __html: `document.documentElement.style.background="#000000"`,
           }}
         />
       </head>

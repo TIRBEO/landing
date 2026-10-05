@@ -1,27 +1,46 @@
 @import "tailwindcss";
 
-:root {
-  --background: #060403;
-  --foreground: #ffffff;
-  --card: #181008;
-  --card-foreground: #ffffff;
-  --popover: #181008;
-  --popover-foreground: #ffffff;
-  --primary: #ffffff;
-  --primary-foreground: #060403;
-  --secondary: #241812;
-  --secondary-foreground: #ffffff;
-  --muted: #1b1310;
-  --muted-foreground: #bd9d8a;
-  --accent: #ff6b2c;
-  --accent-foreground: #0a0503;
-  --destructive: #e5484d;
-  --destructive-foreground: #ffffff;
-  --border: rgba(255, 255, 255, 0.14);
-  --input: #241812;
+/* ═══════════════════════════════════════════════════════════════════
+   Tirbeo — monochrome design tokens.
 
-  --ring: rgba(255, 107, 44, 0.7);
-  --radius: 0.75rem;
+   Strict black & white: the palette is a single neutral ramp from #000
+   to #fff with no hue anywhere. Contrast comes from value and inversion
+   (white blocks on black, black text on white) instead of colour, so the
+   accent token IS white.
+   ═══════════════════════════════════════════════════════════════════ */
+:root {
+  --background: #000000;
+  --foreground: #ffffff;
+  --foreground-soft: #b4b4b4;
+  --foreground-faint: #7a7a7a;
+
+  --card: #0b0b0b;
+  --card-foreground: #ffffff;
+  --popover: #0b0b0b;
+  --popover-foreground: #ffffff;
+
+  --primary: #ffffff;
+  --primary-foreground: #000000;
+  --secondary: #171717;
+  --secondary-foreground: #ffffff;
+  --muted: #141414;
+  --muted-foreground: #8c8c8c;
+
+  /* The accent is white: emphasis is achieved by inverting the block. */
+  --accent: #ffffff;
+  --accent-foreground: #000000;
+
+  /* Errors stay monochrome too — they invert (white block, black text)
+     rather than turning red, which keeps the palette hue-free. */
+  --destructive: #ffffff;
+  --destructive-foreground: #000000;
+
+  --border: rgba(255, 255, 255, 0.16);
+  --border-strong: rgba(255, 255, 255, 0.4);
+  --input: #0f0f0f;
+
+  --ring: rgba(255, 255, 255, 0.75);
+  --radius: 0rem;
 }
 
 @theme inline {
@@ -47,11 +66,11 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-foreground: var(--foreground);
-  --radius-sm: calc(var(--radius) - 0.375rem);
-  --radius-md: calc(var(--radius) - 0.125rem);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 0.5rem);
-  --radius-2xl: calc(var(--radius) + 1rem);
+  --radius-sm: 0rem;
+  --radius-md: 0rem;
+  --radius-lg: 0rem;
+  --radius-xl: 0rem;
+  --radius-2xl: 0rem;
 }
 
 @layer base {
@@ -67,7 +86,7 @@
   body {
     min-width: 20rem;
     overflow-x: hidden;
-    /* Fixed background so the nebula doesn't repaint on scroll/refresh */
+    /* Fixed background so the backdrop doesn't repaint on scroll/refresh */
     background-attachment: fixed;
   }
 
@@ -80,6 +99,15 @@
     outline: 2px solid var(--accent);
     outline-offset: 2px;
   }
+
+  /* Strip the UA's yellow autofill wash so fields stay monochrome. */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus {
+    -webkit-text-fill-color: #ffffff;
+    -webkit-box-shadow: 0 0 0 1000px #0f0f0f inset;
+    caret-color: #ffffff;
+  }
 }
 
 @layer utilities {
@@ -87,15 +115,25 @@
     text-wrap: balance;
   }
 
-  /* Nebula backdrop — warm orange glow drifting over near-black, like
-     embers at dusk. Dim enough for AA contrast with white text. */
-  .nebula {
+  /* ── Backdrop ────────────────────────────────────────────────────
+     Monochrome counterpart of the old gold nebula: a single cool
+     white spotlight bleeding in from the top-right over pure black,
+     plus a faint engineering grid. No hue, no warmth. */
+  .veil {
     background:
-      radial-gradient(42% 55% at 78% 26%, rgba(255, 130, 60, 0.3), transparent 66%),
-      radial-gradient(50% 60% at 12% 78%, rgba(220, 95, 35, 0.24), transparent 68%),
-      radial-gradient(60% 45% at 50% 8%, rgba(120, 60, 30, 0.22), transparent 70%),
-      radial-gradient(35% 40% at 90% 80%, rgba(80, 40, 24, 0.32), transparent 74%),
-      #060403;
+      radial-gradient(58% 62% at 82% 8%, rgba(255, 255, 255, 0.11), transparent 68%),
+      radial-gradient(46% 52% at 6% 92%, rgba(255, 255, 255, 0.05), transparent 70%),
+      #000000;
+  }
+
+  /* Blueprint grid, masked to fade out toward the bottom so it reads as
+     texture rather than as a table. */
+  .grid-lines {
+    background-image:
+      linear-gradient(to right, rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+    background-size: 5.5rem 5.5rem;
+    mask-image: linear-gradient(to bottom, black, transparent 72%);
   }
 
   /* Film grain. Keeps the wide gradients from banding and gives the
@@ -105,27 +143,42 @@
     position: absolute;
     inset: 0;
     pointer-events: none;
-    opacity: 0.3;
+    opacity: 0.22;
     mix-blend-mode: overlay;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
   }
 
-  /* Gradient period for the wordmark — the one brand flourish. */
-  .ig-dot {
-    background: linear-gradient(135deg, #ffb36b, #ff6b2c 55%, #e04e0a);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
-
-  /* Coarser sparkle pass on top of the grain — the blue specks. */
+  /* Coarser monochrome speckle pass layered over the fine grain. */
   .grain::after {
     content: "";
     position: absolute;
     inset: 0;
     pointer-events: none;
-    opacity: 0.14;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='s'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.35' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.35  0 0 0 0 0.6  0 0 0 0 1  0 0 0 0.9 -0.55'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23s)'/%3E%3C/svg%3E");
+    opacity: 0.1;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='s'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.35' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.8  0 0 0 0 0.8  0 0 0 0 0.8  0 0 0 0.75 -0.42'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23s)'/%3E%3C/svg%3E");
+  }
+
+  /* Hairline rule used as a structural divider throughout the layout. */
+  .rule-t {
+    border-top: 1px solid var(--border);
+  }
+  .rule-b {
+    border-bottom: 1px solid var(--border);
+  }
+  .rule-l {
+    border-left: 1px solid var(--border);
+  }
+  .rule-r {
+    border-right: 1px solid var(--border);
+  }
+
+  /* Small-caps label used for eyebrows and column headers. */
+  .eyebrow {
+    font-size: 0.6875rem;
+    line-height: 1;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
   }
 }
 

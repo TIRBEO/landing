@@ -190,5 +190,10 @@ export function safeEqual(a: string, b: string): boolean {
 // site key, the secret and the disable flags are resolved in ONE place — the
 // previous split between a build-inlined client check and a runtime server
 // check is what let the widget vanish while the server kept rejecting tokens.
-export { verifyTurnstile, getTurnstileConfig, toClientConfig } from "./turnstile"
-export type { TurnstileConfig, TurnstileClientConfig } from "./turnstile"
+export {
+  verifyTurnstile,
+  verifyTurnstileDetailed,
+  getTurnstileConfig,
+  toClientConfig,
+} from "./turnstile"
+export type { TurnstileConfig, TurnstileClientConfig, VerifyOutcome } from "./turnstile"

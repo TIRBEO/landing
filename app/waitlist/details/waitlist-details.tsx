@@ -5,7 +5,7 @@ import Link from "next/link"
 import type { TurnstileInstance } from "@marsidev/react-turnstile"
 import { Download, LogOut, Mail } from "lucide-react"
 
-import { Captcha } from "@/components/captcha"
+import { Captcha, captchaMessage, type CaptchaFailure } from "@/components/captcha"
 import type { TurnstileClientConfig } from "@/lib/turnstile"
 
 type Entry = { email: string; createdAt: string; source: string }
@@ -18,6 +18,7 @@ export function WaitlistDetails({ turnstile }: { turnstile: TurnstileClientConfi
   const [error, setError] = useState<string | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [captchaToken, setCaptchaToken] = useState<string | null>(null)
+  const [captchaFailure, setCaptchaFailure] = useState<CaptchaFailure>(null)
 
   const captchaRef = useRef<TurnstileInstance>(null)
   const captchaRequired = turnstile.required
@@ -75,7 +76,12 @@ export function WaitlistDetails({ turnstile }: { turnstile: TurnstileClientConfi
     const res = await fetch("/api/waitlist/admin", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password, turnstileToken: captchaToken }),
+      body: JSON.stringify({
+        password,
+        turnstileToken: captchaToken,
+        // Lets the server distinguish "widget could not run" from a bad token.
+        captchaUnavailable: !captchaToken && !!captchaFailure,
+      }),
     })
     if (res.ok) {
       setAuthed(true)
@@ -114,12 +120,14 @@ export function WaitlistDetails({ turnstile }: { turnstile: TurnstileClientConfi
   }
 
   return (
-    <div className="grain relative isolate flex min-h-dvh flex-col">
-      <main className="relative flex flex-1 flex-col px-4 pt-14 pb-16 sm:px-8 lg:px-10">
-        <div className="mx-auto w-full max-w-6xl">
+    <div className="veil grain relative isolate flex min-h-dvh flex-col">
+      <div className="grid-lines pointer-events-none absolute inset-0 -z-10" aria-hidden />
+
+      <main className="relative mx-auto flex w-full max-w-[100rem] flex-1 flex-col px-5 pt-20 pb-16 sm:px-8 sm:pt-24 lg:px-12">
+        <div className="w-full">
           <Link
             href="/"
-            className="text-[13px] font-medium text-white/50 transition-colors hover:text-white"
+            className="-ml-1.5 inline-flex items-center py-2 pl-1.5 text-[13px] font-medium text-white/50 transition-colors hover:text-white"
           >
             ← Back to site
           </Link>
@@ -128,11 +136,11 @@ export function WaitlistDetails({ turnstile }: { turnstile: TurnstileClientConfi
           <div className="mt-5 flex flex-wrap items-center justify-between gap-4 border-b border-white/15 pb-5">
             <div className="flex items-center gap-6">
               <h1 className="text-[clamp(1.6rem,4vw,2.4rem)] leading-none font-bold tracking-[-0.03em] text-white">
-                Waitlist<span className="text-accent">.</span>
+                Waitlist<span className="ml-1.5 inline-block size-[7px] self-center border border-white" />
               </h1>
               {authed ? (
-                <span className="flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.04] px-3.5 py-1.5 text-[13px] font-semibold tabular">
-                  <Mail className="size-3.5 text-accent" />
+                <span className="flex items-center gap-2 border border-white/20 px-3.5 py-1.5 text-[13px] font-semibold tabular">
+                  <Mail className="size-3.5" />
                   {loading ? "…" : `${entries.length} rows`}
                 </span>
               ) : null}
@@ -142,14 +150,14 @@ export function WaitlistDetails({ turnstile }: { turnstile: TurnstileClientConfi
                 <button
                   onClick={exportCsv}
                   disabled={loading || entries.length === 0}
-                  className="flex items-center gap-1.5 rounded-lg border border-white/20 px-4 py-2 text-[13px] text-white/70 transition-all hover:border-white/50 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                  className="flex items-center gap-1.5 border border-white/20 px-4 py-2 text-[13px] text-white/70 transition-colors hover:border-white hover:bg-white hover:text-black disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <Download className="size-3.5" />
                   Export CSV
                 </button>
                 <button
                   onClick={logout}
-                  className="flex items-center gap-1.5 rounded-lg border border-white/20 px-4 py-2 text-[13px] text-white/70 transition-all hover:border-white/50 hover:text-white"
+                  className="flex items-center gap-1.5 border border-white/20 px-4 py-2 text-[13px] text-white/70 transition-colors hover:border-white hover:bg-white hover:text-black"
                 >
                   <LogOut className="size-3.5" />
                   Log out
@@ -167,7 +175,8 @@ export function WaitlistDetails({ turnstile }: { turnstile: TurnstileClientConfi
               className="mx-auto mt-24 w-full max-w-xs"
               aria-label="Admin login"
             >
-              <h2 className="text-center text-[20px] font-bold tracking-[-0.02em] text-white">
+              <p className="eyebrow text-center text-white/55">Restricted</p>
+              <h2 className="mt-3 text-center text-[22px] font-bold tracking-[-0.02em] text-white">
                 Admin login
               </h2>
               <p className="mt-1.5 text-center text-[13px] text-white/50">
@@ -181,30 +190,39 @@ export function WaitlistDetails({ turnstile }: { turnstile: TurnstileClientConfi
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="current-password"
                 required
-                className="mt-8 h-12 w-full border-0 border-b border-white/25 bg-transparent px-1 text-[16px] text-white transition-colors placeholder:text-white/30 focus:border-accent focus:outline-none"
+                className="mt-8 h-12 w-full border-0 border-b border-white/25 bg-transparent px-1 text-[16px] text-white transition-colors placeholder:text-white/45 focus:border-accent focus:outline-none"
                 placeholder="Password"
               />
 
               <Captcha
                 ref={captchaRef}
                 siteKey={turnstile.siteKey}
-                onToken={setCaptchaToken}
+                onToken={(token) => {
+                  setCaptchaToken(token)
+                  if (token) setCaptchaFailure(null)
+                }}
+                onFailure={setCaptchaFailure}
                 className="mt-6"
               />
 
+              {/* A broken widget must not lock the operator out of their own
+                  waitlist — explain it and stay usable. */}
+              {captchaRequired && captchaFailure ? (
+                <p className="mt-4 text-[13px] leading-relaxed text-white/55" role="status">
+                  {captchaMessage(captchaFailure)}
+                </p>
+              ) : null}
+
               <button
                 type="submit"
-                disabled={captchaRequired && !captchaToken}
-                className="mt-6 inline-flex h-12 w-full items-center justify-center rounded-lg bg-accent text-[15px] font-semibold text-accent-foreground transition-all hover:brightness-110 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40"
+                disabled={captchaRequired && !captchaToken && !captchaFailure}
+                className="mt-6 inline-flex h-12 w-full items-center justify-center border border-white bg-white text-[14px] font-bold tracking-[0.14em] whitespace-nowrap text-black uppercase transition-colors duration-200 hover:bg-transparent hover:text-white active:scale-[0.995] disabled:cursor-not-allowed disabled:border-white/25 disabled:bg-transparent disabled:text-white/45"
               >
                 Unlock
               </button>
 
               {error ? (
-                <p
-                  className={`mt-4 text-center text-[13px] leading-relaxed ${error.startsWith("Verification") || error.startsWith("Too many") ? "text-amber-400/90" : "text-[#ff5a5f]"}`}
-                  role="alert"
-                >
+                <p className="mt-4 text-center text-[13px] leading-relaxed text-white/70" role="alert">
                   {error}
                 </p>
               ) : null}
@@ -215,12 +233,12 @@ export function WaitlistDetails({ turnstile }: { turnstile: TurnstileClientConfi
               {loading ? (
                 <p className="mt-10 text-white/50">Loading rows…</p>
               ) : loadError ? (
-                <div className="mt-8 border border-white/10 bg-white/[0.03] p-10 text-center">
+                <div className="mt-8 border border-white/15 p-10 text-center">
                   <p className="text-[15px] font-semibold text-white">Couldn&apos;t load rows</p>
                   <p className="mt-1 text-[13px] text-white/50">{loadError}</p>
                   <button
                     onClick={() => setAuthed(false)}
-                    className="mt-5 rounded-lg border border-white/20 px-5 py-2 text-[13px] text-white/70 transition-all hover:border-white/50 hover:text-white"
+                    className="mt-5 border border-white/20 px-5 py-2 text-[13px] text-white/70 transition-colors hover:border-white hover:bg-white hover:text-black"
                   >
                     Retry
                   </button>
@@ -270,7 +288,7 @@ export function WaitlistDetails({ turnstile }: { turnstile: TurnstileClientConfi
                             key={`${entry.email}-${i}`}
                             className="border-t border-white/10 transition-colors hover:bg-white/[0.04]"
                           >
-                            <td className="mono border-r border-white/10 px-4 py-3 text-[12px] text-white/35 tabular">
+                            <td className="mono border-r border-white/10 px-4 py-3 text-[12px] text-white/55 tabular">
                               {i + 1}
                             </td>
                             <td className="border-r border-white/10 px-4 py-3 font-medium text-white">

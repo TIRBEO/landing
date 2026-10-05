@@ -93,3 +93,31 @@ test.describe("teams page", () => {
     await expect(page).toHaveURL(/\/$/)
   })
 })
+
+test.describe("document pages", () => {
+  for (const [path, heading] of [
+    ["/privacy", /privacy policy/i],
+    ["/accessibility", /accessibility/i],
+  ] as const) {
+    test(`${path} renders its heading and legal footer links`, async ({ page }) => {
+      const failedRequests: string[] = []
+      page.on("response", (res) => {
+        if (res.status() >= 400) failedRequests.push(`${res.status()} ${res.url()}`)
+      })
+
+      await page.goto(path, { waitUntil: "networkidle" })
+
+      await expect(page.getByRole("heading", { name: heading })).toBeVisible()
+      // Cross-links between the two documents must resolve, not 404.
+      await expect(page.getByRole("link", { name: /accessibility statement/i })).toBeVisible()
+      await expect(page.getByRole("link", { name: /^privacy policy$/i })).toBeVisible()
+      expect(failedRequests, `failed requests: ${failedRequests.join(", ")}`).toEqual([])
+    })
+  }
+
+  test("unknown routes render the themed 404 page", async ({ page }) => {
+    await page.goto("/definitely-not-a-page")
+    await expect(page.getByRole("heading", { name: /doesn't exist/i })).toBeVisible()
+    await expect(page.getByRole("link", { name: /return home/i })).toBeVisible()
+  })
+})

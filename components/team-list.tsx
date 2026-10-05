@@ -157,14 +157,16 @@ export function TeamList() {
   }, [])
 
   return (
-    <div className="grain nebula relative isolate flex min-h-dvh flex-col">
+    <div className="veil grain relative isolate flex min-h-dvh flex-col">
+      <div className="grid-lines pointer-events-none absolute inset-0 -z-10" aria-hidden />
+
       <Header />
 
       {/* Cursor-following photo tooltip */}
       <div
         ref={photoRef}
         aria-hidden="true"
-        className="pointer-events-none fixed top-0 left-0 z-40 hidden h-60 w-48 overflow-hidden rounded-lg shadow-[0_30px_80px_rgba(0,0,0,0.7)] opacity-0 will-change-transform md:block"
+        className="pointer-events-none fixed top-0 left-0 z-40 hidden h-60 w-48 overflow-hidden border border-white/20 opacity-0 will-change-transform md:block"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -177,12 +179,17 @@ export function TeamList() {
 
       <main
         id="main-content"
-        className="relative flex flex-1 flex-col px-6 pt-32 sm:px-10 lg:px-14 lg:pt-44"
+        className="relative mx-auto flex w-full max-w-[100rem] flex-1 flex-col px-5 pt-24 sm:px-8 sm:pt-28 lg:px-12 lg:pt-36"
       >
-        <div className="mx-auto w-full max-w-4xl">
+        <div className="w-full">
           {/* ── Header ── */}
-          <h1 className="text-[clamp(3.5rem,12vw,8.5rem)] leading-[0.88] font-bold tracking-[-0.04em] text-white">
-            The team<span className="text-accent">.</span>
+          <div className="rule-b flex items-center justify-between pb-4">
+            <span className="eyebrow text-white/55">Who we are</span>
+            <span className="eyebrow text-white/55">{members.length} people</span>
+          </div>
+
+          <h1 className="mt-8 text-[clamp(3rem,13vw,10rem)] leading-[0.85] font-black tracking-[-0.045em] text-white uppercase sm:mt-12">
+            The team
           </h1>
 
           {/* ── Names + roles ── */}
@@ -192,19 +199,19 @@ export function TeamList() {
                 key={member.name}
                 data-member
                 data-member-image={member.image}
-                className="group relative border-b border-white/10 first:border-t"
+                className="group relative border-b border-white/15"
               >
                 <a
                   href={`mailto:${member.email}`}
-                  className="relative flex items-center justify-between gap-8 py-8"
+                  className="relative flex flex-col items-start gap-2 py-7 sm:flex-row sm:items-center sm:justify-between sm:gap-8 sm:py-8"
                 >
                   <span className="min-w-0 flex-1">
-                    <span className="block text-[clamp(1.7rem,4.5vw,2.6rem)] leading-none font-medium tracking-[-0.02em] text-white/45 transition-all duration-500 ease-out group-hover:tracking-normal group-hover:text-white">
+                    <span className="block text-[clamp(1.7rem,4.5vw,2.6rem)] leading-none font-medium tracking-[-0.02em] text-white/55 transition-all duration-500 ease-out group-hover:tracking-normal group-hover:text-white">
                       {member.name}
                     </span>
                   </span>
 
-                  <span className="shrink-0 text-right text-[13px] font-medium tracking-wide text-white/35 transition-colors duration-500 group-hover:text-white/70">
+                  <span className="shrink-0 text-right text-[13px] font-medium tracking-wide text-white/55 transition-colors duration-500 group-hover:text-white/70">
                     {member.role}
                   </span>
                 </a>
@@ -213,10 +220,10 @@ export function TeamList() {
           </ul>
 
           {/* ── Contact ── */}
-          <div className="flex flex-col gap-6 py-20 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-4 py-14 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:py-20">
             <a
               href="mailto:hello@tirbeo.com?subject=Contact"
-              className="text-[clamp(1.3rem,3vw,1.9rem)] font-medium tracking-[-0.01em] text-white/60 transition-colors duration-500 hover:text-accent"
+              className="-my-2 inline-flex items-center py-2.5 text-[clamp(1.2rem,3vw,1.9rem)] font-medium tracking-[-0.01em] text-white transition-colors duration-300 hover:text-white/60"
             >
               hello@tirbeo.com
             </a>

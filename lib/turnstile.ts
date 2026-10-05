@@ -97,20 +97,71 @@ type SiteverifyResponse = {
 }
 
 /**
+ * Outcome of a verification attempt, distinguishing "the visitor failed the
+ * challenge" from "there was no challenge to run".
+ */
+export type VerifyOutcome = {
+  ok: boolean
+  /** True when the check was skipped because no token could exist. */
+  skipped?: boolean
+  reason?: string
+}
+
+const skipCounters = new Map<string, number>()
+
+/**
  * Verify a Turnstile token against Cloudflare.
  *
- * Returns `true` only when Cloudflare confirms the token. A missing secret, an
- * explicit disable flag, or a half-configured deployment skips verification so
- * a misconfigured captcha degrades to "no captcha" instead of locking every
- * visitor out — see `readConfig`.
+ * Three cases, and the difference matters:
+ *
+ * 1. No captcha configured, or explicitly disabled → `ok`.
+ * 2. Client supplied a token → it MUST verify. A bad token is rejected.
+ * 3. No token AND the client reported the widget was unavailable
+ *    (`captchaUnavailable`, e.g. the site key isn't allowed for this hostname,
+ *    error 110200) → accepted without verification, counted, and logged.
+ *
+ * Case 3 is what keeps a misconfigured captcha from making the waitlist
+ * permanently unusable: when the site key's hostname allowlist doesn't match,
+ * *no* visitor can ever produce a token, so a hard requirement would 403 every
+ * signup forever. Rate limits, the disposable-domain blocklist and the spam
+ * patterns in the route still apply on this path.
  */
-export async function verifyTurnstile(token: string | undefined, ip?: string): Promise<boolean> {
+export async function verifyTurnstile(
+  token: string | undefined,
+  ip?: string,
+  opts?: { captchaUnavailable?: boolean },
+): Promise<boolean> {
+  const outcome = await verifyTurnstileDetailed(token, ip, opts)
+  return outcome.ok
+}
+
+/** `verifyTurnstile` with the skip reason attached, for logging/telemetry. */
+export async function verifyTurnstileDetailed(
+  token: string | undefined,
+  ip?: string,
+  opts?: { captchaUnavailable?: boolean },
+): Promise<VerifyOutcome> {
   const cfg = readConfig()
   if (!cfg.required) {
     warnMisconfigured(cfg)
-    return true
+    return { ok: true, skipped: true, reason: cfg.misconfigured ?? "not configured" }
   }
-  if (!token) return false
+
+  if (!token) {
+    // Case 3: the widget told us it could not run.
+    if (opts?.captchaUnavailable) {
+      const key = `unavailable:${cfg.siteKey}`
+      skipCounters.set(key, (skipCounters.get(key) ?? 0) + 1)
+      console.warn(
+        `[turnstile] accepted without a challenge (${skipCounters.get(key)} total) — ` +
+          "the widget could not run. If this keeps happening the site key's allowed " +
+          "hostnames probably do not include this domain.",
+      )
+      return { ok: true, skipped: true, reason: "client reported captcha unavailable" }
+    }
+    // No token and no explanation: a bot stripped the widget entirely.
+    return { ok: false, reason: "missing token" }
+  }
 
   try {
     const body = new URLSearchParams({
@@ -129,11 +180,11 @@ export async function verifyTurnstile(token: string | undefined, ip?: string): P
       console.error(
         `[turnstile] rejected token (${data["error-codes"]?.join(", ") || "no reason given"})`,
       )
-      return false
+      return { ok: false, reason: data["error-codes"]?.join(", ") || "rejected" }
     }
-    return true
+    return { ok: true }
   } catch (err) {
     console.error("[turnstile] verification failed", err)
-    return false
+    return { ok: false, reason: "verification error" }
   }
 }

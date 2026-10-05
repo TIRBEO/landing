@@ -3,16 +3,18 @@
 import { useEffect, useRef, useState, type FormEvent } from "react"
 import type { TurnstileInstance } from "@marsidev/react-turnstile"
 
-import { Captcha } from "@/components/captcha"
+import { Captcha, captchaMessage, type CaptchaFailure } from "@/components/captcha"
 import { Header } from "@/components/header"
 import type { TurnstileClientConfig } from "@/lib/turnstile"
 
 /* ═══════════════════════════════════════════════════════════════════
-   Landing — "COMING SOON" poster.
+   Landing — monochrome editorial split.
 
-   Full-bleed gold-nebula backdrop, colossal white headline pinned to
-   the top-left, and a bottom band: launch note + mail-list form +
-   social links, like the reference. No feature claims.
+   Left column carries the statement (eyebrow / colossal headline /
+   launch meta), right column carries the signup card. A hairline
+   divides them on desktop; everything stacks below 1024px. Emphasis
+   comes from inversion — white blocks on black — because the palette
+   carries no hue at all.
    ═══════════════════════════════════════════════════════════════════ */
 
 const SOCIALS_1 = [
@@ -31,15 +33,14 @@ export function LandingPage({ turnstile }: { turnstile: TurnstileClientConfig })
   const [status, setStatus] = useState<"idle" | "submitting" | "success">("idle")
   const [error, setError] = useState<string | false>(false)
   const [captchaToken, setCaptchaToken] = useState<string | null>(null)
-  const [captchaBroken, setCaptchaBroken] = useState(false)
+  const [captchaFailure, setCaptchaFailure] = useState<CaptchaFailure>(null)
   const captchaRef = useRef<TurnstileInstance>(null)
   // Comes from the server so the widget and the API check can never disagree.
   const captchaRequired = turnstile.required
-  const formRef = useRef<HTMLDivElement>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
   const successRef = useRef<HTMLParagraphElement>(null)
 
-  /* Success burst: button pops, gold ring ripples out, message rises in */
+  /* Success burst: button pops, ring ripples out, message rises in */
   useEffect(() => {
     if (status !== "success" || window.matchMedia("(prefers-reduced-motion: reduce)").matches)
       return
@@ -54,30 +55,22 @@ export function LandingPage({ turnstile }: { turnstile: TurnstileClientConfig })
         const msg = successRef.current
         if (!btn) return
 
-        // Button pop
         gsap
           .timeline()
-          .to(btn, { scale: 0.94, duration: 0.09, ease: "power2.in" })
-          .to(btn, { scale: 1.05, duration: 0.22, ease: "power2.out" })
+          .to(btn, { scale: 0.96, duration: 0.09, ease: "power2.in" })
+          .to(btn, { scale: 1.03, duration: 0.22, ease: "power2.out" })
           .to(btn, { scale: 1, duration: 0.35, ease: "elastic.out(1, 0.5)" })
 
-        // Ripple ring — React renders it when status flips to success;
-        // here we just animate it out.
+        // Ripple ring — React renders it when status flips to success.
         const ring = btn.querySelector("[data-ring]")
         if (ring) {
-          gsap.to(ring, {
-            scale: 1.5,
-            opacity: 0,
-            duration: 0.9,
-            ease: "power2.out",
-          })
+          gsap.to(ring, { scale: 1.4, opacity: 0, duration: 0.9, ease: "power2.out" })
         }
 
-        // Success message rises
         if (msg) {
           gsap.fromTo(
             msg,
-            { autoAlpha: 0, y: 10 },
+            { autoAlpha: 0, y: 8 },
             { autoAlpha: 1, y: 0, duration: 0.5, ease: "power3.out", delay: 0.25 },
           )
         }
@@ -99,7 +92,13 @@ export function LandingPage({ turnstile }: { turnstile: TurnstileClientConfig })
       const res = await fetch("/api/waitlist", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, turnstileToken: captchaToken }),
+        body: JSON.stringify({
+          email,
+          turnstileToken: captchaToken,
+          // Tells the server the widget errored, so it can tell "no challenge
+          // was possible" apart from "a token was stripped".
+          captchaUnavailable: !captchaToken && !!captchaFailure,
+        }),
       })
       if (!res.ok) {
         // Show the server's own message (e.g. "Too many attempts…") when
@@ -132,71 +131,82 @@ export function LandingPage({ turnstile }: { turnstile: TurnstileClientConfig })
       setTimeout(() => setError(false), 10_000)
     }
   }
+
   return (
-    <div className="grain nebula relative isolate flex min-h-dvh flex-col">
+    <div className="veil grain relative isolate flex min-h-dvh flex-col">
+      {/* Blueprint grid overlay, purely decorative */}
+      <div className="grid-lines pointer-events-none absolute inset-0 -z-10" aria-hidden />
+
       <Header />
 
-      <main id="main-content" className="relative flex flex-1 flex-col">
-        {/* ── Headline ── */}
-        <div className="flex flex-1 items-start px-6 pt-32 min-[420px]:pt-36 sm:px-10 sm:pt-44 lg:px-14">
-          <h1 className="text-[clamp(3.25rem,16vw,13rem)] leading-[0.9] font-bold tracking-[-0.02em] text-white uppercase">
-            Coming
-            <br />
-            Soon
-          </h1>
-        </div>
+      <main
+        id="main-content"
+        className="mx-auto flex w-full max-w-[100rem] flex-1 flex-col px-5 pt-24 sm:px-8 sm:pt-28 lg:px-12"
+      >
+        <div className="grid flex-1 grid-cols-1 gap-y-14 lg:grid-cols-[1.05fr_1fr] lg:gap-x-0">
+          {/* ── Left: statement ── */}
+          <section className="flex flex-col justify-between pb-2 lg:border-r lg:border-white/15 lg:pr-12 xl:pr-16">
+            <div>
+              {/* Eyebrow row */}
+              <div className="rule-b flex items-center justify-between pb-4">
+                <span className="eyebrow text-white/55">Private beta</span>
+                <span className="eyebrow text-white/55">Est. 2026</span>
+              </div>
 
-        {/* ── Bottom band ── */}
-        <div className="px-6 pb-12 sm:px-10 lg:px-14">
-          <div className="grid items-end gap-12 sm:grid-cols-[1fr_1.4fr_1fr] sm:gap-10">
-            {/* Launch note — hidden on mobile, shown sm+ */}
-            <div className="hidden sm:block">
-              <p className="text-[13px] leading-relaxed font-semibold tracking-wide text-white uppercase">
-                <span className="block">We are</span>{" "}
-                <span className="block">launching our</span>{" "}
-                <span className="block">website soon</span>
-              </p>
-              <p className="mt-5 text-[13px] font-semibold tracking-wide text-white uppercase">
-                Come visit
-              </p>
-              <p className="mt-1.5 text-[12px] text-white/50">Kathmandu, Nepal</p>
+              <h1 className="mt-8 text-[clamp(3.5rem,15vw,12.5rem)] leading-[0.82] font-black tracking-[-0.045em] text-white uppercase sm:mt-12">
+                Coming
+                <br />
+                Soon
+              </h1>
             </div>
 
-            {/* Mail list */}
-            <div ref={formRef} id="join" className="w-full scroll-mt-24 sm:justify-self-center">
-            <form
-              onSubmit={handleSubmit}
-              aria-label="Mailing list signup"
-              className="w-full"
-            >
-              <p className="mb-4 text-[18px] font-bold tracking-wide text-white uppercase">
-                Join our{" "}
-                <span className="text-accent">Mailing List</span>
-              </p>
-              <label htmlFor="email" className="mb-2 block text-[14px] font-medium text-white/90">
+            {/* Launch note — pinned to the bottom of the left column on desktop */}
+            <div className="mt-12 lg:mt-16">
+              <div className="rule-t pt-5">
+                <p className="eyebrow text-white/55">Launch note</p>
+                <p className="mt-4 max-w-sm text-[15px] leading-relaxed text-white/80 sm:text-base">
+                  We are building something new. Leave your address and we&apos;ll tell you
+                  the moment it&apos;s ready.
+                </p>
+                <p className="mt-6 text-[13px] tracking-wide text-white/55 uppercase">
+                  Kathmandu, Nepal
+                </p>
+              </div>
+            </div>
+          </section>
+
+          {/* ── Right: signup ── */}
+          <section
+            id="join"
+            className="flex scroll-mt-24 flex-col justify-center pt-4 lg:pl-12 xl:pl-16"
+          >
+            <form onSubmit={handleSubmit} aria-label="Mailing list signup" className="w-full">
+              <p className="eyebrow rule-b pb-4 text-white/55">Join the mailing list</p>
+
+              <label htmlFor="email" className="mt-8 block text-[15px] font-medium text-white">
                 Email address
               </label>
               <input
                 id="email"
                 type="email"
                 name="email"
-                placeholder="Email *"
+                placeholder="you@example.com"
                 autoComplete="email"
                 inputMode="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={status !== "idle"}
-                className="h-14 w-full rounded-lg border border-white/25 bg-black/40 px-4 text-[16px] text-white transition-colors placeholder:text-white/40 focus:border-accent focus:outline-none"
+                className="mt-3 h-14 w-full border border-white/25 bg-transparent px-4 text-[16px] text-white transition-colors placeholder:text-white/45 hover:border-white/40 focus:border-white focus:outline-none"
               />
 
-              <label className="group mt-5 flex cursor-pointer items-start gap-3 text-[13.5px] leading-snug text-white/80 transition-colors hover:text-white">
-                <span className="relative mt-0.5 shrink-0">
+              <label className="group mt-6 flex cursor-pointer items-start gap-3 text-[14px] leading-snug text-white/70 transition-colors hover:text-white">
+                <span className="relative -m-2 mt-[-2px] flex size-7 shrink-0 items-center justify-center">
                   <input
                     type="checkbox"
                     checked={subscribed}
                     onChange={(e) => setSubscribed(e.target.checked)}
-                    className="peer size-[18px] cursor-pointer appearance-none rounded-[5px] border border-white/40 bg-black/40 transition-colors checked:border-accent checked:bg-accent"
+                    className="peer size-[18px] cursor-pointer appearance-none border border-white/40 bg-transparent transition-colors checked:border-white checked:bg-white"
                     required
                   />
                   <svg
@@ -213,7 +223,10 @@ export function LandingPage({ turnstile }: { turnstile: TurnstileClientConfig })
                   </svg>
                 </span>
                 <span>
-                  Yes, subscribe me to your newsletter. <span className="text-accent" aria-hidden="true">*</span>
+                  Yes, subscribe me to your newsletter.{" "}
+                  <span className="text-white" aria-hidden="true">
+                    *
+                  </span>
                 </span>
               </label>
 
@@ -222,26 +235,20 @@ export function LandingPage({ turnstile }: { turnstile: TurnstileClientConfig })
               <Captcha
                 ref={captchaRef}
                 siteKey={turnstile.siteKey}
-                // A token arriving means the widget recovered (retry: "auto"),
-                // so clear the broken banner and re-enable submit.
                 onToken={(token) => {
                   setCaptchaToken(token)
-                  if (token) setCaptchaBroken(false)
+                  if (token) setCaptchaFailure(null)
                 }}
-                onError={() => setCaptchaBroken(true)}
-                className="mt-5"
+                onFailure={setCaptchaFailure}
+                className="mt-6 [&>div]:border [&>div]:border-white/15 [&>div]:p-2"
               />
 
-              {/* The widget failing (blocked script, un-whitelisted domain)
-                  used to be invisible: no box, no message, and a submit button
-                  that silently never enabled. Say so instead. */}
-              {captchaRequired && captchaBroken ? (
-                <p
-                  className="mt-3 text-[12px] leading-relaxed text-amber-400/90"
-                  role="alert"
-                >
-                  The security check couldn&apos;t load. Please disable an ad-blocker for
-                  this page and refresh to subscribe.
+              {/* A failed widget must never trap the visitor: the form stays
+                  usable and the server is told the check couldn't run, so a
+                  hostname/site-key mismatch can't lock out every signup. */}
+              {captchaRequired && captchaFailure ? (
+                <p className="mt-4 text-[13px] leading-relaxed text-white/55" role="status">
+                  {captchaMessage(captchaFailure)}
                 </p>
               ) : null}
 
@@ -252,21 +259,22 @@ export function LandingPage({ turnstile }: { turnstile: TurnstileClientConfig })
                   status !== "idle" ||
                   !email ||
                   !subscribed ||
-                  // If Turnstile is configured, require a token before submit.
-                  (captchaRequired && (!captchaToken || captchaBroken))
+                  // Require a token only while the widget is still able to
+                  // produce one. `captchaFailure` lifts the requirement.
+                  (captchaRequired && !captchaToken && !captchaFailure)
                 }
-                className="relative mt-5 inline-flex h-14 w-full items-center justify-center gap-2 rounded-lg bg-accent px-6 text-[16px] font-semibold whitespace-nowrap text-accent-foreground transition-colors hover:brightness-110 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40"
+                className="relative mt-7 inline-flex h-14 w-full items-center justify-center gap-2 border border-white bg-white px-6 text-[15px] font-bold tracking-[0.14em] whitespace-nowrap text-black uppercase transition-colors duration-200 hover:bg-transparent hover:text-white active:scale-[0.995] disabled:cursor-not-allowed disabled:border-white/25 disabled:bg-transparent disabled:text-white/45"
               >
                 {status === "success" ? (
                   <span
                     data-ring
                     aria-hidden
-                    className="pointer-events-none absolute inset-0 rounded-lg border-2 border-accent"
+                    className="pointer-events-none absolute inset-0 border-2 border-white"
                   />
                 ) : null}
                 {status === "submitting" && (
                   <span
-                    className="inline-block size-3.5 animate-spin rounded-full border-2 border-accent-foreground/30 border-t-accent-foreground"
+                    className="inline-block size-3.5 animate-spin rounded-full border-2 border-black/25 border-t-black"
                     role="status"
                     aria-label="Subscribing"
                   />
@@ -292,66 +300,59 @@ export function LandingPage({ turnstile }: { turnstile: TurnstileClientConfig })
                 )}
               </button>
 
-              <p
-                ref={successRef}
-                className={`mt-2.5 min-h-4 text-[12px] ${error ? "text-[#ff5a5f]" : "text-accent"}`}
-                aria-live="polite"
-              >
-                {status === "success"
-                  ? "You're on the list — see you at launch."
-                  : error
-                    ? error
-                    : ""}
+              <p ref={successRef} aria-live="polite" className="mt-3 min-h-4">
+                {status === "success" ? (
+                  <span className="text-[13px] text-white/70">
+                    You&apos;re on the list — see you at launch.
+                  </span>
+                ) : error ? (
+                  // Errors invert to a white block on black instead of turning
+                  // red, which would break the hue-free palette.
+                  <span className="inline-block bg-white px-2.5 py-1 text-[12.5px] font-medium text-black">
+                    {error}
+                  </span>
+                ) : null}
               </p>
             </form>
-            </div>
 
-            {/* Socials + legal */}
-            <div className="sm:justify-self-end sm:text-right">
-              <nav aria-label="Social media" className="text-[13px] leading-7">
-                <p className="space-x-4">
-                  {SOCIALS_1.map((s, i) => (
-                    <span key={s.label}>
-                      {i > 0 ? <span className="mr-4 text-white/40" aria-hidden>·</span> : null}
-                      <a
-                        href={s.href}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-white transition-opacity hover:opacity-60"
-                      >
-                        {s.label}
-                      </a>
-                    </span>
-                  ))}
-                </p>
-                <p className="mt-1 space-x-4">
-                  {SOCIALS_2.map((s, i) => (
-                    <span key={s.label}>
-                      {i > 0 ? <span className="mr-4 text-white/40" aria-hidden>·</span> : null}
-                      <a
-                        href={s.href}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-white transition-opacity hover:opacity-60"
-                      >
-                        {s.label}
-                      </a>
-                    </span>
-                  ))}
-                </p>
-              </nav>
-
-              <div className="mt-8 text-[12px] leading-5.5 text-white/50">
-                <a href="/privacy" className="block transition-colors hover:text-white">
-                  Privacy Policy
-                </a>
-                <a href="/accessibility" className="block transition-colors hover:text-white">
-                  Accessibility Statement
-                </a>
-              </div>
-            </div>
-          </div>
+            {/* Socials */}
+            <nav aria-label="Social media" className="mt-10 text-[13px] leading-6">
+              <p className="eyebrow rule-b pb-3 text-white/55">Elsewhere</p>
+              <p className="mt-4 flex flex-wrap gap-x-5 gap-y-1">
+                {[...SOCIALS_1, ...SOCIALS_2].map((s) => (
+                  <a
+                    key={s.label}
+                    href={s.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="-my-1.5 inline-flex min-w-6 items-center justify-center py-2 text-white/75 underline-offset-4 transition-colors hover:text-white hover:underline"
+                  >
+                    {s.label}
+                  </a>
+                ))}
+              </p>
+            </nav>
+          </section>
         </div>
+
+        {/* ── Bottom bar: legal + meta ── */}
+        <footer className="rule-t mt-16 flex flex-col gap-4 py-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[12px] text-white/50">
+            <a
+              href="/privacy"
+              className="-my-1.5 inline-flex items-center py-2 transition-colors hover:text-white hover:underline underline-offset-4"
+            >
+              Privacy Policy
+            </a>
+            <a
+              href="/accessibility"
+              className="-my-1.5 inline-flex items-center py-2 transition-colors hover:text-white hover:underline underline-offset-4"
+            >
+              Accessibility Statement
+            </a>
+          </div>
+          <p className="eyebrow text-white/55">Tirbeo — All rights reserved</p>
+        </footer>
       </main>
     </div>
   )
