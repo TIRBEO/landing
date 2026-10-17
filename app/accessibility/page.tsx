@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function AccessibilityPage() {
   return (
-    <DocumentPage eyebrow="Legal" title="Accessibility" updated="5 Oct 2026">
+    <DocumentPage title="Accessibility" updated="5 Oct 2026">
       <p>
         We want this site to be usable by everyone, including people who browse with a
         keyboard, use a screen reader, or need text scaled up. This page records what we

@@ -120,27 +120,23 @@ export function WaitlistDetails({ turnstile }: { turnstile: TurnstileClientConfi
   }
 
   return (
-    <div className="veil grain relative isolate flex min-h-dvh flex-col">
-      <div className="grid-lines pointer-events-none absolute inset-0 -z-10" aria-hidden />
-
-      <main className="relative mx-auto flex w-full max-w-[100rem] flex-1 flex-col px-5 pt-20 pb-16 sm:px-8 sm:pt-24 lg:px-12">
-        <div className="w-full">
+    <div className="flex min-h-dvh flex-col bg-background">
+      <main className="mx-auto w-full max-w-5xl flex-1 px-5 py-12 sm:px-6">
+        <div>
           <Link
             href="/"
-            className="-ml-1.5 inline-flex items-center py-2 pl-1.5 text-[13px] font-medium text-white/50 transition-colors hover:text-white"
+            className="inline-flex min-h-6 items-center text-sm text-muted-foreground transition-colors hover:text-white"
           >
             ← Back to site
           </Link>
 
           {/* ── Toolbar row: title, count, actions ── */}
-          <div className="mt-5 flex flex-wrap items-center justify-between gap-4 border-b border-white/15 pb-5">
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-6">
-              <h1 className="text-[clamp(1.6rem,4vw,2.4rem)] leading-none font-bold tracking-[-0.03em] text-white">
-                Waitlist<span className="ml-1.5 inline-block size-[7px] self-center border border-white" />
-              </h1>
+              <h1 className="text-2xl font-bold tracking-tight">Waitlist</h1>
               {authed ? (
-                <span className="flex items-center gap-2 border border-white/20 px-3.5 py-1.5 text-[13px] font-semibold tabular">
-                  <Mail className="size-3.5" />
+                <span className="flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-sm text-muted-foreground tabular">
+                  <Mail className="size-4" aria-hidden="true" />
                   {loading ? "…" : `${entries.length} rows`}
                 </span>
               ) : null}
@@ -150,16 +146,16 @@ export function WaitlistDetails({ turnstile }: { turnstile: TurnstileClientConfi
                 <button
                   onClick={exportCsv}
                   disabled={loading || entries.length === 0}
-                  className="flex items-center gap-1.5 border border-white/20 px-4 py-2 text-[13px] text-white/70 transition-colors hover:border-white hover:bg-white hover:text-black disabled:cursor-not-allowed disabled:opacity-40"
+                  className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border px-3 text-sm text-muted-foreground transition-colors hover:border-white/30 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  <Download className="size-3.5" />
+                  <Download className="size-4" aria-hidden="true" />
                   Export CSV
                 </button>
                 <button
                   onClick={logout}
-                  className="flex items-center gap-1.5 border border-white/20 px-4 py-2 text-[13px] text-white/70 transition-colors hover:border-white hover:bg-white hover:text-black"
+                  className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border px-3 text-sm text-muted-foreground transition-colors hover:border-white/30 hover:text-white"
                 >
-                  <LogOut className="size-3.5" />
+                  <LogOut className="size-4" aria-hidden="true" />
                   Log out
                 </button>
               </div>
@@ -168,18 +164,15 @@ export function WaitlistDetails({ turnstile }: { turnstile: TurnstileClientConfi
 
           {/* ── Password gate ── */}
           {authed === null ? (
-            <p className="mt-10 text-white/50">Checking session…</p>
+            <p className="mt-10 text-sm text-muted-foreground">Checking session…</p>
           ) : !authed ? (
             <form
               onSubmit={login}
-              className="mx-auto mt-24 w-full max-w-xs"
+              className="mx-auto mt-16 w-full max-w-sm"
               aria-label="Admin login"
             >
-              <p className="eyebrow text-center text-white/55">Restricted</p>
-              <h2 className="mt-3 text-center text-[22px] font-bold tracking-[-0.02em] text-white">
-                Admin login
-              </h2>
-              <p className="mt-1.5 text-center text-[13px] text-white/50">
+              <h2 className="text-center text-lg font-semibold">Admin login</h2>
+              <p className="mt-1.5 text-center text-sm text-muted-foreground">
                 Enter the admin password to continue.
               </p>
 
@@ -190,7 +183,7 @@ export function WaitlistDetails({ turnstile }: { turnstile: TurnstileClientConfi
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="current-password"
                 required
-                className="mt-8 h-12 w-full border-0 border-b border-white/25 bg-transparent px-1 text-[16px] text-white transition-colors placeholder:text-white/45 focus:border-accent focus:outline-none"
+                className="mt-6 h-11 w-full rounded-lg border border-border bg-input px-3 text-base text-white transition-colors placeholder:text-muted-foreground/70 hover:border-white/25 focus:border-white focus:outline-none"
                 placeholder="Password"
               />
 
@@ -208,7 +201,7 @@ export function WaitlistDetails({ turnstile }: { turnstile: TurnstileClientConfi
               {/* A broken widget must not lock the operator out of their own
                   waitlist — explain it and stay usable. */}
               {captchaRequired && captchaFailure ? (
-                <p className="mt-4 text-[13px] leading-relaxed text-white/55" role="status">
+                <p className="mt-4 text-xs leading-relaxed text-muted-foreground" role="status">
                   {captchaMessage(captchaFailure)}
                 </p>
               ) : null}
@@ -216,13 +209,13 @@ export function WaitlistDetails({ turnstile }: { turnstile: TurnstileClientConfi
               <button
                 type="submit"
                 disabled={captchaRequired && !captchaToken && !captchaFailure}
-                className="mt-6 inline-flex h-12 w-full items-center justify-center border border-white bg-white text-[14px] font-bold tracking-[0.14em] whitespace-nowrap text-black uppercase transition-colors duration-200 hover:bg-transparent hover:text-white active:scale-[0.995] disabled:cursor-not-allowed disabled:border-white/25 disabled:bg-transparent disabled:text-white/45"
+                className="mt-4 inline-flex h-11 w-full items-center justify-center rounded-lg bg-accent text-sm font-semibold text-accent-foreground transition-colors hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Unlock
               </button>
 
               {error ? (
-                <p className="mt-4 text-center text-[13px] leading-relaxed text-white/70" role="alert">
+                <p className="mt-4 text-center text-sm text-white" role="alert">
                   {error}
                 </p>
               ) : null}
@@ -231,14 +224,14 @@ export function WaitlistDetails({ turnstile }: { turnstile: TurnstileClientConfi
             <>
               {/* ── Spreadsheet-style table ── */}
               {loading ? (
-                <p className="mt-10 text-white/50">Loading rows…</p>
+                <p className="mt-10 text-sm text-muted-foreground">Loading rows…</p>
               ) : loadError ? (
-                <div className="mt-8 border border-white/15 p-10 text-center">
-                  <p className="text-[15px] font-semibold text-white">Couldn&apos;t load rows</p>
-                  <p className="mt-1 text-[13px] text-white/50">{loadError}</p>
+                <div className="mt-8 rounded-xl border border-border bg-card p-10 text-center">
+                  <p className="font-medium">Couldn&apos;t load rows</p>
+                  <p className="mt-1 text-sm text-muted-foreground">{loadError}</p>
                   <button
                     onClick={() => setAuthed(false)}
-                    className="mt-5 border border-white/20 px-5 py-2 text-[13px] text-white/70 transition-colors hover:border-white hover:bg-white hover:text-black"
+                    className="mt-5 inline-flex h-9 items-center rounded-lg border border-border px-4 text-sm text-muted-foreground transition-colors hover:border-white/30 hover:text-white"
                   >
                     Retry
                   </button>
@@ -246,25 +239,25 @@ export function WaitlistDetails({ turnstile }: { turnstile: TurnstileClientConfi
               ) : entries.length === 0 ? (
                 <div className="mt-8 border border-white/10 bg-white/[0.03] p-10 text-center">
                   <p className="text-[15px] font-semibold text-white">No rows yet</p>
-                  <p className="mt-1 text-[13px] text-white/50">
+                  <p className="mt-1 text-sm text-muted-foreground">
                     New subscribers appear here instantly.
                   </p>
                 </div>
               ) : (
-                <div className="mt-8 overflow-x-auto border border-white/15">
-                  <table className="w-full min-w-[640px] border-collapse text-left text-[14px]">
+                <div className="mt-8 overflow-x-auto rounded-xl border border-border">
+                  <table className="w-full min-w-[560px] border-collapse text-left text-sm">
                     <thead>
-                      <tr className="bg-white/[0.06] text-[11.5px] font-semibold tracking-[0.08em] text-white/60 uppercase">
-                        <th className="w-14 border-r border-white/10 px-4 py-3 font-semibold">
+                      <tr className="bg-white/5 text-xs font-medium text-muted-foreground">
+                        <th className="w-14 border-r border-border px-4 py-3 font-semibold">
                           #
                         </th>
-                        <th className="border-r border-white/10 px-4 py-3 font-semibold">
+                        <th className="border-r border-border px-4 py-3 font-semibold">
                           Email
                         </th>
-                        <th className="w-56 border-r border-white/10 px-4 py-3 font-semibold">
+                        <th className="w-56 border-r border-border px-4 py-3 font-semibold">
                           Date
                         </th>
-                        <th className="w-40 border-r border-white/10 px-4 py-3 font-semibold">
+                        <th className="w-40 border-r border-border px-4 py-3 font-semibold">
                           Time
                         </th>
                         <th className="w-24 px-4 py-3 font-semibold">Source</th>
@@ -286,21 +279,21 @@ export function WaitlistDetails({ turnstile }: { turnstile: TurnstileClientConfi
                         return (
                           <tr
                             key={`${entry.email}-${i}`}
-                            className="border-t border-white/10 transition-colors hover:bg-white/[0.04]"
+                            className="border-t border-border transition-colors hover:bg-white/[0.03]"
                           >
-                            <td className="mono border-r border-white/10 px-4 py-3 text-[12px] text-white/55 tabular">
+                            <td className="border-r border-border px-4 py-3 text-xs text-muted-foreground/70 tabular">
                               {i + 1}
                             </td>
-                            <td className="border-r border-white/10 px-4 py-3 font-medium text-white">
+                            <td className="border-r border-border px-4 py-3 font-medium text-white">
                               {entry.email}
                             </td>
-                            <td className="border-r border-white/10 px-4 py-3 text-white/60 tabular">
+                            <td className="border-r border-border px-4 py-3 text-muted-foreground tabular">
                               {date}
                             </td>
-                            <td className="mono border-r border-white/10 px-4 py-3 text-white/60 tabular">
+                            <td className="mono border-r border-border px-4 py-3 text-muted-foreground tabular">
                               {time}
                             </td>
-                            <td className="px-4 py-3 text-[13px] text-white/50">{entry.source}</td>
+                            <td className="px-4 py-3 text-muted-foreground">{entry.source}</td>
                           </tr>
                         )
                       })}

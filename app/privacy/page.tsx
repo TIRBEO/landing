@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function PrivacyPage() {
   return (
-    <DocumentPage eyebrow="Legal" title="Privacy Policy" updated="5 Oct 2026">
+    <DocumentPage title="Privacy Policy" updated="5 Oct 2026">
       <p>
         Tirbeo is not open yet. While we wait, the only thing this site can collect is an
         email address you type into the mailing list yourself. This page explains what

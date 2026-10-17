@@ -117,7 +117,7 @@ test.describe("document pages", () => {
 
   test("unknown routes render the themed 404 page", async ({ page }) => {
     await page.goto("/definitely-not-a-page")
-    await expect(page.getByRole("heading", { name: /doesn't exist/i })).toBeVisible()
+    await expect(page.getByRole("heading", { name: /page not found/i })).toBeVisible()
     await expect(page.getByRole("link", { name: /return home/i })).toBeVisible()
   })
 })
