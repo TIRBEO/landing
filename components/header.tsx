@@ -3,11 +3,12 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 
-import { LoginDevModal } from "@/components/login-dev-modal"
+import { LoginModal } from "@/components/login-modal"
 
 export function Header() {
-  // Login isn't open yet — show the development-phase modal instead.
-  const [showDevModal, setShowDevModal] = useState(false)
+  // Sign-in lives on the accounts app; this dialog is the hand-off (see
+  // components/login-modal.tsx).
+  const [showLoginModal, setShowLoginModal] = useState(false)
   const [scrolled, setScrolled] = useState(false)
 
   useEffect(() => {
