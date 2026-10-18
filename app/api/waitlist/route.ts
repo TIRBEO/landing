@@ -2,7 +2,7 @@ import { promises as fs } from "node:fs"
 import path from "node:path"
 import { NextResponse } from "next/server"
 import { getClient, resetClient } from "@/lib/mongodb"
-import { clientIp, rateLimit, tooManyRequests, verifyTurnstile } from "@/lib/security"
+import { clientIp, rateLimit, tooManyRequests, verifyTurnstileDetailed } from "@/lib/security"
 
 const EMAIL_RE = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/
 const MAX_EMAIL_LEN = 254
@@ -116,14 +116,31 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Please use a real email address" }, { status: 400 })
     }
 
-    // ── Cloudflare Turnstile bot check ──
-    // A widget that could not run (site key not allowed for this hostname)
-    // reports `captchaUnavailable` and is accepted without a token — otherwise
-    // a server-side Cloudflare misconfig would 403 every real signup forever.
-    const human = await verifyTurnstile(body.turnstileToken, ip, {
+    // ── Cloudflare Turnstile bot check, with a graceful fallback ──
+    // A hard 403 on a missing token is a dead end whenever the check cannot
+    // run: challenges.cloudflare.com unreachable from the visitor's network,
+    // an ad-blocker, a hung script, or Cloudflare itself down for us. Those
+    // requests are not rejected — they ride a TIGHTER secondary budget
+    // instead: 5 captcha-less signups per hour per IP (against the standard
+    // 20/10min above), logged per use. Abuse stays bounded; the tightened
+    // fallback limit is the control. A token that Cloudflare actively
+    // *rejected* (we reached it, it said no) still fails normally.
+    const outcome = await verifyTurnstileDetailed(body.turnstileToken, ip, {
       captchaUnavailable: body.captchaUnavailable === true,
     })
-    if (!human) {
+    const needsFallback =
+      // Widget reported it could not run: accepted, but on the tight budget.
+      (outcome.skipped === true && outcome.reason === "client reported captcha unavailable") ||
+      // No token and no explanation (or Cloudflare itself unreachable):
+      // also fallback-eligible instead of a hard 403 dead end.
+      (!outcome.ok && (outcome.reason === "missing token" || outcome.reason === "verification error"))
+    if (needsFallback) {
+      const fb = await rateLimit(`signup-captcha-fallback:${ip}`, 5, 60 * 60 * 1000)
+      if (!fb.ok) return tooManyRequests(fb.retryAfter)
+      console.warn(
+        `[waitlist] captcha fallback used (reason: ${outcome.reason ?? "unknown"}, ip: ${ip})`,
+      )
+    } else if (!outcome.ok) {
       return NextResponse.json(
         { error: "Human verification failed. Please try again." },
         { status: 403 },

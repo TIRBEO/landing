@@ -146,8 +146,10 @@ export function LandingPage({ turnstile }: { turnstile: TurnstileClientConfig })
             />
 
             {/* A failed widget must never trap the visitor: the form stays
-                usable and the server is told the check couldn't run. */}
-            {captchaRequired && captchaFailure ? (
+                usable and the server is told the check couldn't run. Cases
+                the visitor cannot act on (blocked/timeout) show NO message —
+                the submission just rides the server's fallback gate. */}
+            {captchaRequired && captchaFailure && captchaMessage(captchaFailure) ? (
               <p className="mt-4 text-xs leading-relaxed text-muted-foreground" role="status">
                 {captchaMessage(captchaFailure)}
               </p>
