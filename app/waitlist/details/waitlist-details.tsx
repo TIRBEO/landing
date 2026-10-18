@@ -209,7 +209,7 @@ export function WaitlistDetails({ turnstile }: { turnstile: TurnstileClientConfi
               <button
                 type="submit"
                 disabled={captchaRequired && !captchaToken && !captchaFailure}
-                className="mt-4 inline-flex h-11 w-full items-center justify-center rounded-lg bg-accent text-sm font-semibold text-accent-foreground transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50"
+                className="mt-4 inline-flex h-11 w-full items-center justify-center rounded-lg bg-accent-solid text-sm font-semibold text-accent-foreground transition-colors hover:bg-accent-solid-hover disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Unlock
               </button>

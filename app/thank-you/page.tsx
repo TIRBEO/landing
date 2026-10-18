@@ -33,7 +33,7 @@ export default function ThankYouPage() {
 
       <main id="main-content" className="flex flex-1 items-center justify-center px-5 py-16">
         <div className="w-full max-w-lg text-center">
-          <span className="mx-auto grid size-14 place-items-center rounded-full bg-accent text-accent-foreground">
+          <span className="mx-auto grid size-14 place-items-center rounded-full bg-accent-solid text-accent-foreground">
             <Check className="size-7" aria-hidden="true" />
           </span>
 
@@ -65,7 +65,7 @@ export default function ThankYouPage() {
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <Link
               href="/"
-              className="inline-flex h-11 items-center rounded-lg bg-accent px-5 text-sm font-semibold text-accent-foreground transition-colors hover:bg-accent-hover"
+              className="inline-flex h-11 items-center rounded-lg bg-accent-solid px-5 text-sm font-semibold text-accent-foreground transition-colors hover:bg-accent-solid-hover"
             >
               Back to the site
             </Link>

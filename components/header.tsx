@@ -46,7 +46,7 @@ export function Header() {
           <ThemeToggle />
           <button
             onClick={() => setShowLoginModal(true)}
-            className="inline-flex h-9 items-center rounded-lg bg-accent px-4 text-sm font-semibold text-accent-foreground transition-colors hover:bg-accent-hover"
+            className="inline-flex h-9 items-center rounded-lg bg-accent-solid px-4 text-sm font-semibold text-accent-foreground transition-colors hover:bg-accent-solid-hover"
           >
             Log in
           </button>

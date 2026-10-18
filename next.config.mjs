@@ -21,6 +21,34 @@ const nextConfig = {
   },
 
   /**
+   * Response headers for every route. No `Content-Security-Policy` here: the
+   * App Router streams its payload through inline `__next_f` scripts, so a CSP
+   * that is not nonce-based would have to allow `unsafe-inline` — which is the
+   * thing the header is supposed to prevent. Everything else is free.
+   */
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          {
+            key: "Permissions-Policy",
+            value: "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
+          },
+          { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+          {
+            key: "Strict-Transport-Security",
+            value: "max-age=63072000; includeSubDomains; preload",
+          },
+        ],
+      },
+    ]
+  },
+
+  /**
    * Every URL a visitor, a search engine, or another Tirbeo app is likely to
    * ask for that is not a page of its own.
    *
