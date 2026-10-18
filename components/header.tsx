@@ -37,7 +37,7 @@ export function Header() {
             Teams
           </Link>
           <button
-            onClick={() => setShowDevModal(true)}
+            onClick={() => setShowLoginModal(true)}
             className="rounded-lg border border-border px-3.5 py-2 text-sm font-medium transition-colors hover:border-white/30 hover:bg-white/5"
           >
             Log in
@@ -45,7 +45,7 @@ export function Header() {
         </nav>
       </div>
 
-      {showDevModal ? <LoginDevModal onClose={() => setShowDevModal(false)} /> : null}
+      {showLoginModal ? <LoginModal onClose={() => setShowLoginModal(false)} /> : null}
     </header>
   )
 }
