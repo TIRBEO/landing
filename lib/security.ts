@@ -4,29 +4,47 @@ import { createClient, type RedisClientType } from "redis"
 
 /* ── Redis-backed rate limiter (shared across instances) ──
    Uses INCR + EXPIRE when REDIS_URL is configured; falls back to an
-   in-memory limiter (single-instance) when it isn't or Redis fails. */
+   in-memory limiter (single-instance) when it isn't or Redis fails.
+
+   Hardening rule: NOTHING in the Redis plumbing may ever throw into the
+   request path. A bad REDIS_URL (createClient throws synchronously on a
+   malformed URL) or an unreachable Redis used to 500 every POST — the
+   limiter is infrastructure, and if it breaks the app must keep serving
+   on the in-memory budget instead of locking everyone out. */
 
 let redis: RedisClientType | null = null
 let redisConnecting: Promise<RedisClientType | null> | null = null
+// Once a connection attempt fails we stop retrying for the process
+// lifetime: serverless instances are short-lived, and re-probing a dead
+// Redis on every request would add its full timeout to each signup.
+let redisGaveUp = false
+const REDIS_CONNECT_TIMEOUT_MS = 3_000
 
 function getRedis(): Promise<RedisClientType | null> {
   const url = process.env.REDIS_URL
-  if (!url) return Promise.resolve(null)
+  if (!url || redisGaveUp) return Promise.resolve(null)
   if (redis) return Promise.resolve(redis)
   if (!redisConnecting) {
-    redisConnecting = createClient({ url })
-      .connect()
-      .then((client) => {
-        redis = client as RedisClientType
-        return redis
-      })
-      .catch((err) => {
-        console.error("[redis] connection failed, falling back to memory", err)
-        redisConnecting = null
-        return null
-      })
+    try {
+      redisConnecting = createClient({ url, socket: { connectTimeout: REDIS_CONNECT_TIMEOUT_MS } })
+        .connect()
+        .then((client) => {
+          redis = client as RedisClientType
+          return redis
+        })
+        .catch((err) => {
+          console.error("[redis] connection failed, using in-memory limiter:", String(err))
+          redisGaveUp = true
+          redisConnecting = null
+          return null
+        })
+    } catch (err) {
+      // Malformed URL etc. throws synchronously — never let it escape.
+      console.error("[redis] invalid REDIS_URL, using in-memory limiter:", String(err))
+      redisGaveUp = true
+    }
   }
-  return redisConnecting
+  return redisConnecting ?? Promise.resolve(null)
 }
 
 // In-memory fallback (per instance; fine for local dev).
@@ -50,36 +68,45 @@ export type RateLimitResult = {
   retryAfter: number // seconds until window resets
 }
 
+function memoryLimit(key: string, limit: number, windowMs: number): RateLimitResult {
+  sweep()
+  const now = Date.now()
+  const bucket = buckets.get(key)
+
+  if (!bucket || bucket.resetAt < now) {
+    buckets.set(key, { count: 1, resetAt: now + windowMs })
+    return { ok: true, remaining: limit - 1, retryAfter: 0 }
+  }
+
+  bucket.count++
+  if (bucket.count > limit) {
+    return {
+      ok: false,
+      remaining: 0,
+      retryAfter: Math.ceil((bucket.resetAt - now) / 1000),
+    }
+  }
+  return { ok: true, remaining: limit - bucket.count, retryAfter: 0 }
+}
+
 /**
  * Fixed-window rate limiter, shared across instances via Redis when
- * REDIS_URL is set. Denies requests (fails closed) only if Redis is
- * configured but errors out; in-memory fallback is best-effort.
+ * REDIS_URL is set. If Redis is configured but errors mid-command we
+ * degrade to the in-memory bucket (still a working per-instance limit)
+ * rather than deny every visitor — a flaky limiter must never become a
+ * site-wide outage.
  * @param key    unique id, usually `purpose:ip`
  * @param limit  max requests per window
  * @param windowMs window length in ms
  */
 export async function rateLimit(key: string, limit: number, windowMs: number): Promise<RateLimitResult> {
-  const client = await getRedis()
-  if (!client) {
-    sweep()
-    const now = Date.now()
-    const bucket = buckets.get(key)
-
-    if (!bucket || bucket.resetAt < now) {
-      buckets.set(key, { count: 1, resetAt: now + windowMs })
-      return { ok: true, remaining: limit - 1, retryAfter: 0 }
-    }
-
-    bucket.count++
-    if (bucket.count > limit) {
-      return {
-        ok: false,
-        remaining: 0,
-        retryAfter: Math.ceil((bucket.resetAt - now) / 1000),
-      }
-    }
-    return { ok: true, remaining: limit - bucket.count, retryAfter: 0 }
+  let client: RedisClientType | null = null
+  try {
+    client = await getRedis()
+  } catch (err) {
+    console.error("[redis] unexpected limiter error, using memory:", String(err))
   }
+  if (!client) return memoryLimit(key, limit, windowMs)
 
   // Redis path: INCR then EXPIRE on first hit (atomic-enough fixed window).
   try {
@@ -98,8 +125,8 @@ export async function rateLimit(key: string, limit: number, windowMs: number): P
     }
     return { ok: true, remaining: limit - count, retryAfter: 0 }
   } catch (err) {
-    console.error("[redis] rate limit error, failing closed", err)
-    return { ok: false, remaining: 0, retryAfter: 60 }
+    console.error("[redis] rate limit command failed, using memory", err)
+    return memoryLimit(key, limit, windowMs)
   }
 }
 
