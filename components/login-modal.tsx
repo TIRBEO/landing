@@ -1,7 +1,8 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef } from "react"
 import { X } from "lucide-react"
+import Link from "next/link"
 
 import { accountsHost, signInUrl } from "@/lib/accounts"
 
@@ -19,13 +20,11 @@ import { accountsHost, signInUrl } from "@/lib/accounts"
  */
 export function LoginModal({ onClose }: { onClose: () => void }) {
   const closeRef = useRef<HTMLButtonElement>(null)
-  // Resolved after mount: the visitor's exact page is only knowable in the
-  // browser, and reading it during render would desync server and client HTML.
-  const [returnTo, setReturnTo] = useState<string | undefined>(undefined)
 
-  useEffect(() => {
-    setReturnTo(window.location.href)
-  }, [])
+  // The visitor's exact page is only knowable in the browser, so the
+  // `redirect_to` parameter is attached on click rather than stored in state
+  // set from an effect — server and client HTML stay byte-identical, and a
+  // no-JS or middle-click still lands on the plain sign-in URL.
 
   // Close on Escape, lock scroll, and move focus into the dialog so the
   // keyboard isn't stranded behind the backdrop.
@@ -75,20 +74,24 @@ export function LoginModal({ onClose }: { onClose: () => void }) {
         </p>
 
         <a
-          href={signInUrl(returnTo)}
-          onClick={onClose}
+          href={signInUrl()}
+          onClick={(e) => {
+            e.preventDefault()
+            window.location.href = signInUrl(window.location.href)
+            onClose()
+          }}
           className="mt-6 inline-flex h-11 w-full items-center justify-center rounded-lg bg-accent px-4 text-sm font-semibold text-accent-foreground transition-colors hover:bg-accent-hover"
         >
           Sign in at {accountsHost()}
         </a>
 
-        <a
+        <Link
           href="/#join"
           onClick={onClose}
           className="mt-3 inline-flex h-11 w-full items-center justify-center rounded-lg border border-border px-4 text-sm font-medium transition-colors hover:border-border-strong hover:bg-fill"
         >
           Not joined yet — add my email to the list
-        </a>
+        </Link>
 
         <button
           onClick={onClose}
