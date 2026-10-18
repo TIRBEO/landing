@@ -1,24 +1,12 @@
 import type { Metadata, Viewport } from "next"
-import { Inter, JetBrains_Mono } from "next/font/google"
 import { PageTransition } from "@/components/page-transition"
+import { THEME_BOOT } from "@/lib/theme"
 import "./globals.css"
 
 const siteUrl = "https://tirbeo.com"
 const title = "Tirbeo — Coming soon"
 const description =
   "Tirbeo is a new kind of social app, built in public from Kathmandu. Not ready yet."
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-  display: "swap",
-})
-
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ["latin"],
-  variable: "--font-jetbrains-mono",
-  display: "swap",
-})
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -32,24 +20,21 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  colorScheme: "dark",
-  themeColor: "#000000",
+  colorScheme: "dark light",
+  themeColor: [
+    { media: "(prefers-color-scheme: dark)", color: "#1c1c1e" },
+    { media: "(prefers-color-scheme: light)", color: "#f2f2f7" },
+  ],
 }
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* bg paints before CSS arrives, so a hard refresh never flashes white */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `document.documentElement.style.background="#000000"`,
-          }}
-        />
+        {/* Sets data-theme + color-scheme before first paint — no flash. */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOT }} />
       </head>
-      <body
-        className={`${inter.variable} ${jetbrainsMono.variable} min-h-dvh bg-background font-sans text-foreground antialiased selection:bg-accent selection:text-accent-foreground`}
-      >
+      <body className="min-h-dvh bg-background font-sans text-foreground antialiased">
         <PageTransition>{children}</PageTransition>
       </body>
     </html>

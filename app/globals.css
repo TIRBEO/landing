@@ -1,48 +1,129 @@
 @import "tailwindcss";
 
 /* ═══════════════════════════════════════════════════════════════════
-   Tirbeo — monochrome tokens.
-
-   Plain black & white: a neutral ramp from #000 to #fff with no hue.
-   Everything else is conventional UI — normal type sizes, normal
-   spacing, standard corner radii. Contrast comes from white on black,
-   not from colour.
+   Tirbeo landing — Apple grouped palette, light + dark.
+   Canonical spec: docs/design/apple-tokens.css (repo root).
+   The shadcn-style names below are kept as aliases of the canonical
+   tokens so existing class strings render the Apple palette.
    ═══════════════════════════════════════════════════════════════════ */
-:root {
-  --background: #000000;
-  --foreground: #ffffff;
-  --card: #0f0f0f;
-  --card-foreground: #ffffff;
-  --popover: #0f0f0f;
-  --popover-foreground: #ffffff;
-  --primary: #ffffff;
-  --primary-foreground: #000000;
-  --secondary: #1a1a1a;
-  --secondary-foreground: #ffffff;
-  --muted: #171717;
-  --muted-foreground: #a1a1a1;
+:root,
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #1c1c1e;
+  --card: #2c2c2e;
+  --surface: #2c2c2e;
+  --surface-2: #3a3a3c;
+  --surface-3: #48484a;
+  --fg: #ffffff;
+  --muted: #a1a1a8;
+  --link: #64a5ff;
+  --text-2: #ebeaf0;
+  --text-3: #a1a1a8;
+  --text-4: #8e8e93;
+  --placeholder: #7c7c85;
+  --border: #48484a;
+  --border-strong: #5a5a5e;
+  --divider: #38383a;
+  --hover: #3a3a3c;
+  --accent: #0a84ff;
+  --accent-hover: #409cff;
+  --accent-press: #0060c9;
+  --accent-text: #64a5ff;
+  --accent-fg: #ffffff;
+  --danger: #ff453a;
+  --danger-text: #ff6961;
+  --success: #32d74b;
+  --warn: #ffd60a;
+  --stack-sans: -apple-system, BlinkMacSystemFont, system-ui, "Segoe UI", Roboto,
+    Helvetica, Arial, sans-serif;
+  --stack-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --scrim: rgb(0 0 0 / 62%);
+  --field: #3a3a3c;
+  --fill: rgba(120, 120, 128, 0.24);
+  --hairline: #38383a;
+  --glass: rgba(28, 28, 30, 0.85);
+  --glass-2: rgba(28, 28, 30, 0.94);
+  --ambient: rgba(255, 255, 255, 0.05);
+  --faint: rgba(255, 255, 255, 0.06);
 
-  /* The accent is white, so emphasis is an inverted block rather than a hue. */
-  --accent: #ffffff;
-  --accent-foreground: #000000;
+  /* shadcn-style aliases */
+  --background: var(--bg);
+  --foreground: var(--fg);
+  --card-foreground: var(--fg);
+  --popover: var(--card);
+  --popover-foreground: var(--fg);
+  --primary: var(--accent);
+  --primary-foreground: var(--accent-fg);
+  --secondary: var(--surface-2);
+  --secondary-foreground: var(--fg);
+  --muted-foreground: var(--muted);
+  --accent-foreground: var(--accent-fg);
+  --destructive: var(--danger);
+  --destructive-foreground: #ffffff;
+  --input: var(--field);
+  --ring: var(--accent);
+  --radius: 12px;
+}
 
-  /* Errors invert to white-on-black instead of turning red, which would
-     break the hue-free palette. */
-  --destructive: #ffffff;
-  --destructive-foreground: #000000;
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f2f2f7;
+  --card: #ffffff;
+  --surface: #ffffff;
+  --surface-2: #f2f2f7;
+  --surface-3: #e8e8ee;
+  --fg: #171717;
+  --muted: #5d5d66;
+  --link: #0068d6;
+  --text-2: #3f3f46;
+  --text-3: #5d5d66;
+  --text-4: #8e8e93;
+  --placeholder: #a1a1aa;
+  --border: #d1d1d6;
+  --border-strong: #c6c6c8;
+  --divider: #c6c6c8;
+  --hover: #ececf1;
+  --accent: #007aff;
+  --accent-hover: #0066d6;
+  --accent-press: #0055b8;
+  --accent-text: #0068d6;
+  --accent-fg: #ffffff;
+  --danger: #e0342c;
+  --danger-text: #c9261f;
+  --success: #1ea64b;
+  --warn: #c47b00;
+  --scrim: rgb(18 19 22 / 45%);
+  --field: #ffffff;
+  --fill: rgba(120, 120, 128, 0.16);
+  --hairline: #c6c6c8;
+  --glass: rgba(255, 255, 255, 0.86);
+  --glass-2: rgba(255, 255, 255, 0.95);
+  --ambient: rgba(18, 19, 22, 0.04);
+  --faint: rgba(18, 19, 22, 0.05);
 
-  --border: rgba(255, 255, 255, 0.14);
-  --input: #111111;
-
-  --ring: rgba(255, 255, 255, 0.7);
-  --radius: 0.5rem;
+  --background: var(--bg);
+  --foreground: var(--fg);
+  --card-foreground: var(--fg);
+  --popover: var(--card);
+  --popover-foreground: var(--fg);
+  --primary: var(--accent);
+  --primary-foreground: var(--accent-fg);
+  --secondary: var(--surface-2);
+  --secondary-foreground: var(--fg);
+  --muted-foreground: var(--muted);
+  --accent-foreground: var(--accent-fg);
+  --destructive: var(--danger);
+  --destructive-foreground: #ffffff;
+  --input: var(--field);
+  --ring: var(--accent);
 }
 
 @theme inline {
-  --font-sans: var(--font-inter);
-  --font-display: var(--font-inter);
-  --font-mono: var(--font-jetbrains-mono);
+  --font-sans: var(--stack-sans);
+  --font-display: var(--stack-sans);
+  --font-mono: var(--stack-mono);
   --color-background: var(--background);
+  --color-foreground: var(--foreground);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
   --color-popover: var(--popover);
@@ -51,21 +132,37 @@
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
+  --color-muted: var(--surface-2);
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-text: var(--accent-text);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-danger-text: var(--danger-text);
   --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-divider: var(--divider);
+  --color-hairline: var(--hairline);
   --color-input: var(--input);
+  --color-field: var(--field);
+  --color-fill: var(--fill);
   --color-ring: var(--ring);
-  --color-foreground: var(--foreground);
-  --radius-sm: calc(var(--radius) - 0.25rem);
-  --radius-md: calc(var(--radius) - 0.125rem);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 0.25rem);
-  --radius-2xl: calc(var(--radius) + 0.5rem);
+  --color-glass: var(--glass);
+  --color-glass-2: var(--glass-2);
+  --color-text-2: var(--text-2);
+  --color-text-3: var(--text-3);
+  --color-text-4: var(--text-4);
+  --color-placeholder: var(--placeholder);
+  --color-scrim: var(--scrim);
+  --color-ambient: var(--ambient);
+  --color-faint: var(--faint);
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 17px;
+  --radius-2xl: 20px;
 }
 
 @layer base {
@@ -74,7 +171,6 @@
   }
 
   html {
-    color-scheme: dark;
     background: var(--background);
   }
 
@@ -85,21 +181,20 @@
 
   ::selection {
     background: var(--accent);
-    color: var(--accent-foreground);
+    color: var(--accent-fg);
   }
 
   :focus-visible {
-    outline: 2px solid var(--accent);
+    outline: 2px solid var(--ring);
     outline-offset: 2px;
   }
 
-  /* Strip the UA's yellow autofill wash so fields stay monochrome. */
   input:-webkit-autofill,
   input:-webkit-autofill:hover,
   input:-webkit-autofill:focus {
-    -webkit-text-fill-color: #ffffff;
-    -webkit-box-shadow: 0 0 0 1000px #111111 inset;
-    caret-color: #ffffff;
+    -webkit-text-fill-color: var(--fg);
+    -webkit-box-shadow: 0 0 0 1000px var(--field) inset;
+    caret-color: var(--fg);
   }
 }
 

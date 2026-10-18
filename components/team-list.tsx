@@ -42,7 +42,7 @@ export function TeamList() {
               <li key={member.name}>
                 <a
                   href={`mailto:${member.email}`}
-                  className="flex items-center gap-4 rounded-lg border border-border bg-card p-4 transition-colors hover:border-white/25"
+                  className="flex items-center gap-4 rounded-lg border border-border bg-card p-4 transition-colors hover:border-border-strong"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
@@ -55,7 +55,7 @@ export function TeamList() {
                     className="size-14 shrink-0 rounded-full object-cover"
                   />
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate font-medium text-white">{member.name}</span>
+                    <span className="block truncate font-medium text-foreground">{member.name}</span>
                     <span className="block truncate text-sm text-muted-foreground">
                       {member.role}
                     </span>
@@ -69,7 +69,7 @@ export function TeamList() {
           <div className="mt-12 border-t border-border pt-6">
             <a
               href="mailto:hello@tirbeo.com?subject=Contact"
-              className="inline-flex min-h-6 items-center text-sm text-muted-foreground transition-colors hover:text-white"
+              className="inline-flex min-h-6 items-center text-sm text-muted-foreground transition-colors hover:text-foreground"
             >
               hello@tirbeo.com
             </a>

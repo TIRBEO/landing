@@ -37,13 +37,13 @@ export function DocumentPage({
         <nav className="mx-auto flex max-w-2xl items-center justify-between gap-4 text-sm">
           <Link
             href="/privacy"
-            className="-my-1 inline-flex min-h-6 items-center px-1 py-1 text-muted-foreground transition-colors hover:text-white"
+            className="-my-1 inline-flex min-h-6 items-center px-1 py-1 text-muted-foreground transition-colors hover:text-foreground"
           >
             Privacy Policy
           </Link>
           <Link
             href="/accessibility"
-            className="-my-1 inline-flex min-h-6 items-center px-1 py-1 text-muted-foreground transition-colors hover:text-white"
+            className="-my-1 inline-flex min-h-6 items-center px-1 py-1 text-muted-foreground transition-colors hover:text-foreground"
           >
             Accessibility Statement
           </Link>
@@ -57,7 +57,7 @@ export function DocumentPage({
 export function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section>
-      <h2 className="text-lg font-semibold text-white">{title}</h2>
+      <h2 className="text-lg font-semibold text-foreground">{title}</h2>
       <div className="mt-3 flex flex-col gap-4">{children}</div>
     </section>
   )

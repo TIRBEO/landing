@@ -53,14 +53,14 @@ export function LoginModal({ onClose }: { onClose: () => void }) {
         if (e.target === e.currentTarget) onClose()
       }}
     >
-      <div className="absolute inset-0 bg-black/70" />
+      <div className="absolute inset-0 bg-scrim" />
 
       <div className="relative w-full max-w-sm rounded-xl border border-border bg-card p-6">
         <button
           ref={closeRef}
           onClick={onClose}
           aria-label="Close"
-          className="absolute top-3 right-3 rounded-md p-2 text-muted-foreground transition-colors hover:bg-white/10 hover:text-white"
+          className="absolute top-3 right-3 rounded-md p-2 text-muted-foreground transition-colors hover:bg-fill hover:text-foreground"
         >
           <X className="size-4" />
         </button>
@@ -77,7 +77,7 @@ export function LoginModal({ onClose }: { onClose: () => void }) {
         <a
           href={signInUrl(returnTo)}
           onClick={onClose}
-          className="mt-6 inline-flex h-11 w-full items-center justify-center rounded-lg bg-accent px-4 text-sm font-semibold text-accent-foreground transition-colors hover:bg-white/90"
+          className="mt-6 inline-flex h-11 w-full items-center justify-center rounded-lg bg-accent px-4 text-sm font-semibold text-accent-foreground transition-colors hover:bg-accent-hover"
         >
           Sign in at {accountsHost()}
         </a>
@@ -85,14 +85,14 @@ export function LoginModal({ onClose }: { onClose: () => void }) {
         <a
           href="/#join"
           onClick={onClose}
-          className="mt-3 inline-flex h-11 w-full items-center justify-center rounded-lg border border-border px-4 text-sm font-medium transition-colors hover:border-white/30 hover:bg-white/5"
+          className="mt-3 inline-flex h-11 w-full items-center justify-center rounded-lg border border-border px-4 text-sm font-medium transition-colors hover:border-border-strong hover:bg-fill"
         >
           Not joined yet — add my email to the list
         </a>
 
         <button
           onClick={onClose}
-          className="mt-1 h-11 w-full rounded-lg text-sm text-muted-foreground transition-colors hover:bg-white/5 hover:text-white"
+          className="mt-1 h-11 w-full rounded-lg text-sm text-muted-foreground transition-colors hover:bg-fill hover:text-foreground"
         >
           Cancel
         </button>

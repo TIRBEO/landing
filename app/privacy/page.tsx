@@ -55,7 +55,7 @@ export default function PrivacyPage() {
           Email{" "}
           <a
             href="mailto:hello@tirbeo.com?subject=Waitlist%20removal"
-            className="-my-2 inline-flex items-center py-2.5 text-white underline underline-offset-4 transition-colors hover:text-white/70"
+            className="-my-2 inline-flex items-center py-2.5 text-foreground underline underline-offset-4 transition-colors hover:text-foreground"
           >
             hello@tirbeo.com
           </a>{" "}

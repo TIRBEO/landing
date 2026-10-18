@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 
 import { LoginModal } from "@/components/login-modal"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 export function Header() {
   // Sign-in lives on the accounts app; this dialog is the hand-off (see
@@ -20,8 +21,8 @@ export function Header() {
 
   return (
     <header
-      className={`sticky top-0 z-50 transition-colors ${
-        scrolled ? "border-b border-border bg-black/80 backdrop-blur" : "border-b border-transparent"
+      className={`sticky top-0 z-50 border-b backdrop-blur-xl backdrop-saturate-150 transition-colors ${
+        scrolled ? "border-divider bg-glass" : "border-transparent bg-transparent"
       }`}
     >
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5 sm:px-6">
@@ -32,13 +33,14 @@ export function Header() {
         <nav className="flex items-center gap-1 sm:gap-2" aria-label="Main">
           <Link
             href="/teams"
-            className="rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-white/5 hover:text-white"
+            className="rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-fill hover:text-foreground"
           >
             Teams
           </Link>
+          <ThemeToggle />
           <button
             onClick={() => setShowLoginModal(true)}
-            className="rounded-lg border border-border px-3.5 py-2 text-sm font-medium transition-colors hover:border-white/30 hover:bg-white/5"
+            className="inline-flex h-9 items-center rounded-lg bg-accent px-4 text-sm font-semibold text-accent-foreground transition-colors hover:bg-accent-hover"
           >
             Log in
           </button>
