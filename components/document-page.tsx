@@ -1,10 +1,10 @@
-import Link from "next/link"
 import type { ReactNode } from "react"
 
 import { Header } from "@/components/header"
+import { SiteFooter } from "@/components/site-footer"
 
 /**
- * Shared layout for the flat document pages (privacy, accessibility).
+ * Shared layout for the flat document pages (privacy, terms, accessibility).
  *
  * A single readable column (65ch) with normal heading sizes — long-form
  * copy, not a landing page.
@@ -33,22 +33,7 @@ export function DocumentPage({
         </article>
       </main>
 
-      <footer className="border-t border-border px-5 py-6">
-        <nav className="mx-auto flex max-w-2xl items-center justify-between gap-4 text-sm">
-          <Link
-            href="/privacy"
-            className="-my-1 inline-flex min-h-6 items-center px-1 py-1 text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Privacy Policy
-          </Link>
-          <Link
-            href="/accessibility"
-            className="-my-1 inline-flex min-h-6 items-center px-1 py-1 text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Accessibility Statement
-          </Link>
-        </nav>
-      </footer>
+      <SiteFooter />
     </div>
   )
 }

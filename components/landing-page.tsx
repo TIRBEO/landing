@@ -1,12 +1,13 @@
 "use client"
 
 import { useRef, useState, type FormEvent } from "react"
-import Link from "next/link"
+import { useRouter } from "next/navigation"
 import type { TurnstileInstance } from "@marsidev/react-turnstile"
-import { Check, Loader2 } from "lucide-react"
+import { Loader2 } from "lucide-react"
 
 import { Captcha, captchaMessage, type CaptchaFailure } from "@/components/captcha"
 import { Header } from "@/components/header"
+import { SiteFooter } from "@/components/site-footer"
 import type { TurnstileClientConfig } from "@/lib/turnstile"
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -24,6 +25,7 @@ const SOCIALS = [
 ]
 
 export function LandingPage({ turnstile }: { turnstile: TurnstileClientConfig }) {
+  const router = useRouter()
   const [email, setEmail] = useState("")
   const [subscribed, setSubscribed] = useState(false)
   const [status, setStatus] = useState<"idle" | "submitting" | "success">("idle")
@@ -69,12 +71,13 @@ export function LandingPage({ turnstile }: { turnstile: TurnstileClientConfig })
         return
       }
 
+      // Success is a page, not a flash of green text: it survives a refresh,
+      // it can be bookmarked, and it means the button never ends up looking
+      // like it did nothing.
       setStatus("success")
-      setSubscribed(true)
-      setEmail("")
       setCaptchaToken(null)
       captchaRef.current?.reset()
-      setTimeout(() => setStatus("idle"), 10_000)
+      router.push("/thank-you")
     } catch {
       setStatus("idle")
       setError("Something went wrong. Please try again.")
@@ -98,11 +101,13 @@ export function LandingPage({ turnstile }: { turnstile: TurnstileClientConfig })
             we&apos;ll let you know the moment it&apos;s live.
           </p>
 
-          {/* ── Signup ── */}
+          {/* ── Signup ── `#join` is the target the login modal and the
+              /join, /subscribe redirects point at. */}
           <form
+            id="join"
             onSubmit={handleSubmit}
             aria-label="Mailing list signup"
-            className="mt-9 text-left"
+            className="mt-9 scroll-mt-24 text-left"
           >
             <label htmlFor="email" className="mb-2 block text-sm font-medium text-foreground">
               Email address
@@ -167,27 +172,18 @@ export function LandingPage({ turnstile }: { turnstile: TurnstileClientConfig })
               }
               className="mt-6 inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-accent px-5 text-sm font-semibold text-accent-foreground transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {status === "submitting" && (
+              {status === "submitting" || status === "success" ? (
                 <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-              )}
-              {status === "success" ? (
-                <>
-                  <Check className="size-4" aria-hidden="true" />
-                  You&apos;re in
-                </>
-              ) : (
-                "Subscribe"
-              )}
+              ) : null}
+              {status === "success"
+                ? "You're in"
+                : status === "submitting"
+                  ? "Adding you…"
+                  : "Subscribe"}
             </button>
 
             <p aria-live="polite" className="mt-3 min-h-5 text-sm">
-              {status === "success" ? (
-                <span className="text-muted-foreground">
-                  You&apos;re on the list — we&apos;ll be in touch.
-                </span>
-              ) : error ? (
-                <span className="text-sm font-medium text-danger-text">{error}</span>
-              ) : null}
+              {error ? <span className="text-sm font-medium text-danger-text">{error}</span> : null}
             </p>
           </form>
 
@@ -211,25 +207,7 @@ export function LandingPage({ turnstile }: { turnstile: TurnstileClientConfig })
         </div>
       </main>
 
-      <footer className="border-t border-border px-5 py-6">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 text-sm text-muted-foreground sm:flex-row">
-          <p>&copy; {new Date().getFullYear()} Tirbeo</p>
-          <nav className="flex items-center gap-4">
-            <Link
-              href="/privacy"
-              className="-my-1 inline-flex min-h-6 items-center px-1 py-1 transition-colors hover:text-foreground"
-            >
-              Privacy Policy
-            </Link>
-            <Link
-              href="/accessibility"
-              className="-my-1 inline-flex min-h-6 items-center px-1 py-1 transition-colors hover:text-foreground"
-            >
-              Accessibility Statement
-            </Link>
-          </nav>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   )
 }

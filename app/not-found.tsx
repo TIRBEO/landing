@@ -1,6 +1,7 @@
 import Link from "next/link"
 
 import { Header } from "@/components/header"
+import { SiteFooter } from "@/components/site-footer"
 
 export default function NotFound() {
   return (
@@ -31,8 +32,35 @@ export default function NotFound() {
               Meet the team
             </Link>
           </div>
+
+          <p className="mt-8 text-sm text-muted-foreground">
+            Or read the{" "}
+            <Link
+              href="/privacy"
+              className="text-foreground underline underline-offset-4 transition-colors hover:text-accent-text"
+            >
+              privacy policy
+            </Link>
+            , the{" "}
+            <Link
+              href="/terms"
+              className="text-foreground underline underline-offset-4 transition-colors hover:text-accent-text"
+            >
+              terms
+            </Link>
+            , or{" "}
+            <Link
+              href="/contact"
+              className="text-foreground underline underline-offset-4 transition-colors hover:text-accent-text"
+            >
+              contact us
+            </Link>
+            .
+          </p>
         </div>
       </main>
+
+      <SiteFooter />
     </div>
   )
 }

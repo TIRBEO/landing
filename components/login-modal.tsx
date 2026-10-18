@@ -13,10 +13,9 @@ import { accountsHost, signInUrl } from "@/lib/accounts"
  * does one real job: send the visitor there and bring them back to the page
  * they were on.
  *
- * It replaced a version that offered "Join the mailing list" through
- * `href="/#join"` — an anchor that did not exist on the page, so the click was
- * a no-op. The mailing-list link is still here, but it now points at the form's
- * own `#join` anchor on the home page, and the primary CTA is the real login.
+ * The secondary CTA is the mailing-list form on the home page — the signup
+ * `<form id="join">` in components/landing-page.tsx is what `/#join` scrolls
+ * to, so the two must stay in step.
  */
 export function LoginModal({ onClose }: { onClose: () => void }) {
   const closeRef = useRef<HTMLButtonElement>(null)

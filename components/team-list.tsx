@@ -3,6 +3,7 @@
 import { Mail } from "lucide-react"
 
 import { Header } from "@/components/header"
+import { SiteFooter } from "@/components/site-footer"
 
 const members = [
   {
@@ -77,6 +78,8 @@ export function TeamList() {
           </div>
         </div>
       </main>
+
+      <SiteFooter />
     </div>
   )
 }

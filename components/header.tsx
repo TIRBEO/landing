@@ -37,6 +37,12 @@ export function Header() {
           >
             Teams
           </Link>
+          <Link
+            href="/contact"
+            className="rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-fill hover:text-foreground"
+          >
+            Contact
+          </Link>
           <ThemeToggle />
           <button
             onClick={() => setShowLoginModal(true)}
