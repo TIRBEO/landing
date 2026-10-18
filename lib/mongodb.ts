@@ -22,10 +22,18 @@ export function getClient(): Promise<MongoClient> | null {
   if (!uri) return null
 
   if (!cached) {
-    const promise = new MongoClient(uri, {
-      serverSelectionTimeoutMS: SERVER_SELECTION_TIMEOUT_MS,
-      connectTimeoutMS: SERVER_SELECTION_TIMEOUT_MS,
-    }).connect()
+    let promise: Promise<MongoClient>
+    try {
+      // An invalid connection string throws synchronously in the driver —
+      // degrade to the file fallback instead of failing every request.
+      promise = new MongoClient(uri, {
+        serverSelectionTimeoutMS: SERVER_SELECTION_TIMEOUT_MS,
+        connectTimeoutMS: SERVER_SELECTION_TIMEOUT_MS,
+      }).connect()
+    } catch (err) {
+      console.error('[mongodb] invalid MONGODB_URI, using file fallback:', err instanceof Error ? err.message : err)
+      return null
+    }
 
     // Don't leave an unhandled rejection warning if a caller is gone.
     promise.catch(() => {})
