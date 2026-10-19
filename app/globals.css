@@ -182,17 +182,17 @@
 }
 
 @layer base {
-  * {
+  *,
+  *::before,
+  *::after {
     border-color: var(--border);
+    /* Flex children default to min-width:auto and push layouts wider than the
+       viewport — every row here is a flex row with text in it. */
+    min-width: 0;
   }
 
   html {
     background: var(--background);
-  }
-
-  body {
-    min-width: 20rem;
-    overflow-x: hidden;
   }
 
   ::selection {
