@@ -474,7 +474,22 @@
   }
 }
 
-.animate-spin-slow {
+/* The fleet's one in-flight mark: a ring that takes the colour of the label
+   beside it and thickens with its own box, so it stays visible on a filled
+   button, a quiet pill and plain text alike — a fixed accent would vanish on
+   the accent. Call sites set --spinner-size for the box and never a size
+   utility; this rule is unlayered, so it would beat `size-*`. Under
+   prefers-reduced-motion the kill-switch stops the turn and the ring reads as
+   a static arc: still a waiting mark, never a spinning one. */
+.spinner {
+  display: inline-block;
+  flex: none;
+  inline-size: var(--spinner-size, 16px);
+  block-size: var(--spinner-size, 16px);
+  border: max(2px, calc(var(--spinner-size, 16px) / 8)) solid
+    color-mix(in srgb, currentColor 26%, transparent);
+  border-top-color: currentColor;
+  border-radius: 50%;
   animation: spin 700ms linear infinite;
 }
 
