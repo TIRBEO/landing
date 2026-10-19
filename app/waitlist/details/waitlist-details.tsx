@@ -6,6 +6,7 @@ import type { TurnstileInstance } from "@marsidev/react-turnstile"
 import { Download, LogOut, Mail } from "lucide-react"
 
 import { Captcha, captchaMessage, type CaptchaFailure } from "@/components/captcha"
+import { Spinner } from "@/components/spinner"
 import type { TurnstileClientConfig } from "@/lib/turnstile"
 
 type Entry = { email: string; createdAt: string; source: string }
@@ -15,6 +16,11 @@ export function WaitlistDetails({ turnstile }: { turnstile: TurnstileClientConfi
   const [entries, setEntries] = useState<Entry[]>([])
   const [loading, setLoading] = useState(false)
   const [password, setPassword] = useState("")
+  const [submitting, setSubmitting] = useState(false)
+  const [exporting, setExporting] = useState(false)
+  const [loggingOut, setLoggingOut] = useState(false)
+  const [notice, setNotice] = useState<string | null>(null)
+  const [reload, setReload] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [captchaToken, setCaptchaToken] = useState<string | null>(null)
@@ -32,13 +38,14 @@ export function WaitlistDetails({ turnstile }: { turnstile: TurnstileClientConfi
   }, [])
 
   // Load entries once authed. A failed load must NOT log the user out —
-  // show a retryable error instead.
+  // show a retryable error instead, and Retry re-runs this effect through
+  // `reload` rather than dropping the session.
   useEffect(() => {
     if (!authed) return
     let cancelled = false
-    // Resetting the load state when `authed` flips is the point of this effect:
-    // it re-runs per auth transition and must clear the previous attempt's
-    // spinner/error before retrying. Derived-state-during-render would lose
+    // Resetting the load state when the run starts is the point of this effect:
+    // it re-runs per auth transition and per Retry, and must clear the previous
+    // attempt's spinner/error first. Derived-state-during-render would lose
     // that reset, so the synchronous setState is intentional here.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true)
@@ -68,7 +75,7 @@ export function WaitlistDetails({ turnstile }: { turnstile: TurnstileClientConfi
     return () => {
       cancelled = true
     }
-  }, [authed])
+  }, [authed, reload])
 
   /* Which edges are hiding rows. The right-hand fade and the held column's
      shadow are the table admitting that it scrolls, and neither is true on a
@@ -99,50 +106,78 @@ export function WaitlistDetails({ turnstile }: { turnstile: TurnstileClientConfi
   async function login(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
-    const res = await fetch("/api/waitlist/admin", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        password,
-        turnstileToken: captchaToken,
-        // Lets the server distinguish "widget could not run" from a bad token.
-        captchaUnavailable: !captchaToken && !!captchaFailure,
-      }),
-    })
-    if (res.ok) {
-      setAuthed(true)
-      setPassword("")
-      setCaptchaToken(null)
-      captchaRef.current?.reset()
-    } else if (res.status === 403) {
-      // Captcha failed — most likely the widget couldn't load/verify
-      // (e.g. domain not whitelisted for the Turnstile site key).
-      setError(
-        "Verification failed — the security check couldn't complete. If this keeps happening, the captcha may not be configured for this domain.",
-      )
-      setCaptchaToken(null)
-      captchaRef.current?.reset()
-    } else if (res.status === 429) {
-      setError("Too many attempts. Wait a few minutes and try again.")
-    } else {
-      setError("Wrong password.")
-      setCaptchaToken(null)
-      captchaRef.current?.reset()
+    setSubmitting(true)
+    try {
+      const res = await fetch("/api/waitlist/admin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          password,
+          turnstileToken: captchaToken,
+          // Lets the server distinguish "widget could not run" from a bad token.
+          captchaUnavailable: !captchaToken && !!captchaFailure,
+        }),
+      })
+      if (res.ok) {
+        setAuthed(true)
+        setPassword("")
+        setCaptchaToken(null)
+        captchaRef.current?.reset()
+      } else if (res.status === 403) {
+        // Captcha failed — most likely the widget couldn't load/verify
+        // (e.g. domain not whitelisted for the Turnstile site key).
+        setError(
+          "Verification failed — the security check couldn't complete. If this keeps happening, the captcha may not be configured for this domain.",
+        )
+        setCaptchaToken(null)
+        captchaRef.current?.reset()
+      } else if (res.status === 429) {
+        setError("Too many attempts. Wait a few minutes and try again.")
+      } else {
+        setError("Wrong password.")
+        setCaptchaToken(null)
+        captchaRef.current?.reset()
+      }
+    } finally {
+      setSubmitting(false)
     }
   }
 
-  function exportCsv() {
-    // Triggers a direct download from the admin-only CSV endpoint. This has to
-    // be a real navigation (not router.push) so the browser honours the
-    // Content-Disposition attachment response.
-    // eslint-disable-next-line @next/next/no-location-assign-relative-destination
-    window.location.href = "/api/waitlist/export"
+  /* The CSV is fetched rather than navigated to, so the button can show the
+     wait and a failure can be said out loud instead of downloading an error
+     page as a file. The name still comes from the server's Content-Disposition. */
+  async function exportCsv() {
+    setExporting(true)
+    setNotice(null)
+    try {
+      const res = await fetch("/api/waitlist/export")
+      if (!res.ok) throw new Error(String(res.status))
+      const header = res.headers.get("Content-Disposition") ?? ""
+      const href = URL.createObjectURL(await res.blob())
+      const link = document.createElement("a")
+      link.href = href
+      link.download = /filename="?([^";]+)"?/.exec(header)?.[1] ?? "waitlist.csv"
+      link.click()
+      // Released on a timer: revoking in the same tick has cut the download
+      // short in some browsers, and the blob is small enough to let go of here.
+      setTimeout(() => URL.revokeObjectURL(href), 1000)
+    } catch {
+      setNotice("Couldn't export the CSV. Try again.")
+    } finally {
+      setExporting(false)
+    }
   }
 
   async function logout() {
-    await fetch("/api/waitlist/admin", { method: "DELETE" })
-    setAuthed(false)
-    setEntries([])
+    setLoggingOut(true)
+    try {
+      await fetch("/api/waitlist/admin", { method: "DELETE" })
+      setAuthed(false)
+      setEntries([])
+      setNotice(null)
+    } finally {
+      setLoggingOut(false)
+    }
   }
 
   return (
@@ -162,8 +197,8 @@ export function WaitlistDetails({ turnstile }: { turnstile: TurnstileClientConfi
               <h1 className="text-2xl font-bold tracking-tight">Waitlist</h1>
               {authed ? (
                 <span className="flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-sm text-muted-foreground tabular">
-                  <Mail className="size-4" aria-hidden="true" />
-                  {loading ? "…" : `${entries.length} rows`}
+                  {loading ? <Spinner size={15} /> : <Mail className="size-4" aria-hidden="true" />}
+                  {loading ? "Loading rows…" : `${entries.length} rows`}
                 </span>
               ) : null}
             </div>
@@ -171,26 +206,41 @@ export function WaitlistDetails({ turnstile }: { turnstile: TurnstileClientConfi
               <div className="flex items-center gap-2">
                 <button
                   onClick={exportCsv}
-                  disabled={loading || entries.length === 0}
+                  disabled={loading || exporting || entries.length === 0}
+                  aria-busy={exporting || undefined}
                   className="btn btn-secondary btn-sm"
                 >
-                  <Download className="size-4" aria-hidden="true" />
-                  Export CSV
+                  {exporting ? <Spinner size={15} /> : <Download className="size-4" aria-hidden="true" />}
+                  {exporting ? "Building CSV…" : "Export CSV"}
                 </button>
                 <button
                   onClick={logout}
+                  disabled={loggingOut}
+                  aria-busy={loggingOut || undefined}
                   className="btn btn-secondary btn-sm"
                 >
-                  <LogOut className="size-4" aria-hidden="true" />
-                  Log out
+                  {loggingOut ? <Spinner size={15} /> : <LogOut className="size-4" aria-hidden="true" />}
+                  {loggingOut ? "Signing out…" : "Log out"}
                 </button>
               </div>
             ) : null}
           </div>
 
+          {notice ? (
+            <p className="mt-4 text-sm font-medium text-danger-text" role="status">
+              {notice}
+            </p>
+          ) : null}
+
           {/* ── Password gate ── */}
           {authed === null ? (
-            <p className="mt-10 text-sm text-muted-foreground">Checking session…</p>
+            <div
+              className="mt-10 flex items-center gap-2.5 text-sm text-muted-foreground"
+              aria-busy="true"
+            >
+              <Spinner size={15} />
+              Checking session…
+            </div>
           ) : !authed ? (
             <form
               onSubmit={login}
@@ -234,10 +284,12 @@ export function WaitlistDetails({ turnstile }: { turnstile: TurnstileClientConfi
 
               <button
                 type="submit"
-                disabled={captchaRequired && !captchaToken && !captchaFailure}
+                disabled={submitting || (captchaRequired && !captchaToken && !captchaFailure)}
+                aria-busy={submitting || undefined}
                 className="btn btn-primary btn-block mt-4"
               >
-                Unlock
+                {submitting ? <Spinner size={16} /> : null}
+                {submitting ? "Checking…" : "Unlock"}
               </button>
 
               {error ? (
@@ -252,7 +304,11 @@ export function WaitlistDetails({ turnstile }: { turnstile: TurnstileClientConfi
               {loading ? (
                 /* The table's own plate, plated empty: same border, same
                    row rhythm, so the rows arriving don't move the page. */
-                <div className="mt-8 rounded-xl border border-border bg-card p-4" aria-busy="true">
+                <div
+                  className="mt-8 rounded-xl border border-border bg-card p-4"
+                  role="status"
+                  aria-busy="true"
+                >
                   <span className="sr-only">Loading rows…</span>
                   <div className="space-y-3">
                     {Array.from({ length: 6 }, (_, i) => (
@@ -265,7 +321,7 @@ export function WaitlistDetails({ turnstile }: { turnstile: TurnstileClientConfi
                   <p className="font-medium">Couldn&apos;t load rows</p>
                   <p className="mt-1 text-sm text-muted-foreground">{loadError}</p>
                   <button
-                    onClick={() => setAuthed(false)}
+                    onClick={() => setReload((n) => n + 1)}
                     className="btn btn-secondary btn-sm mt-5"
                   >
                     Retry

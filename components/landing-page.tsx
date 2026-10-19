@@ -3,11 +3,12 @@
 import { useRef, useState, type FormEvent } from "react"
 import { useRouter } from "next/navigation"
 import type { TurnstileInstance } from "@marsidev/react-turnstile"
-import { Loader2 } from "lucide-react"
+import { Check } from "lucide-react"
 
 import { Captcha, captchaMessage, type CaptchaFailure } from "@/components/captcha"
 import { Header } from "@/components/header"
 import { SiteFooter } from "@/components/site-footer"
+import { Spinner } from "@/components/spinner"
 import type { TurnstileClientConfig } from "@/lib/turnstile"
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -171,9 +172,12 @@ export function LandingPage({ turnstile }: { turnstile: TurnstileClientConfig })
                 (captchaRequired && !captchaToken && !captchaFailure)
               }
               className="btn btn-primary btn-block mt-6 h-14"
+              aria-busy={status === "submitting" || undefined}
             >
-              {status === "submitting" || status === "success" ? (
-                <Loader2 className="size-4 animate-spin-slow" aria-hidden="true" />
+              {status === "submitting" ? (
+                <Spinner size={17} />
+              ) : status === "success" ? (
+                <Check className="size-4" aria-hidden="true" />
               ) : null}
               {status === "success"
                 ? "You’re in"
