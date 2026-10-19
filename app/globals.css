@@ -282,6 +282,68 @@
   }
 }
 
+/* ── Data table ──────────────────────────────────────────────────────
+   Waitlist rows are the one place content is wider than the screen.
+   A clipped edge that stays silent reads as "the data ends here", so
+   the container says what it is doing: a fade where rows continue
+   behind the edge, and the index column held in place while you scroll
+   across, so a row keeps its number. Borders on a sticky cell vanish
+   under `border-collapse: collapse` in WebKit, hence the inset shadow.
+   ───────────────────────────────────────────────────────────────── */
+.tb-scroll {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+.tb-scroll::-webkit-scrollbar {
+  height: 8px;
+}
+
+.tb-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.tb-scroll::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 999px;
+}
+
+.tb-scroll[data-more="true"] {
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+  mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+}
+
+.tb-table td {
+  transition: background-color 140ms ease;
+}
+
+.tb-table th:first-child,
+.tb-table td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--card);
+  box-shadow: inset -1px 0 0 var(--divider);
+}
+
+.tb-table thead th:first-child {
+  z-index: 2;
+  background: var(--surface-2);
+}
+
+.tb-scroll[data-scrolled="true"] .tb-table th:first-child,
+.tb-scroll[data-scrolled="true"] .tb-table td:first-child {
+  box-shadow: inset -1px 0 0 var(--divider), 6px 0 8px -6px var(--scrim);
+}
+
+/* After the sticky rule, so a hovered row repaints the held column too. */
+.tb-row:hover td {
+  background: var(--hover);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

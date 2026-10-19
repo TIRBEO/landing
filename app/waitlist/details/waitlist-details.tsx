@@ -70,6 +70,32 @@ export function WaitlistDetails({ turnstile }: { turnstile: TurnstileClientConfi
     }
   }, [authed])
 
+  /* Which edges are hiding rows. The right-hand fade and the held column's
+     shadow are the table admitting that it scrolls, and neither is true on a
+     wide screen — so they answer to the live geometry, not to a media query. */
+  const scroller = useRef<HTMLDivElement>(null)
+  const [scroll, setScroll] = useState({ more: false, scrolled: false })
+
+  useEffect(() => {
+    const el = scroller.current
+    if (!el) return
+    const measure = () => {
+      const room = el.scrollWidth - el.clientWidth
+      setScroll({ more: room - el.scrollLeft > 1, scrolled: el.scrollLeft > 1 })
+    }
+    measure()
+    el.addEventListener("scroll", measure, { passive: true })
+    const onResize = new ResizeObserver(measure)
+    onResize.observe(el)
+    return () => {
+      el.removeEventListener("scroll", measure)
+      onResize.disconnect()
+    }
+    // The scroller is in the branch that renders once rows arrive, so the
+    // listener has to be re-attached when this effect last ran against a
+    // different element — a spinner unmounting it counts as one.
+  }, [loading, entries.length])
+
   async function login(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
@@ -244,61 +270,58 @@ export function WaitlistDetails({ turnstile }: { turnstile: TurnstileClientConfi
                   </p>
                 </div>
               ) : (
-                <div className="mt-8 overflow-x-auto rounded-xl border border-border">
-                  <table className="w-full min-w-[560px] border-collapse text-left text-sm">
-                    <thead>
-                      <tr className="bg-muted text-xs font-medium text-muted-foreground">
-                        <th className="w-14 border-r border-border px-4 py-3 font-semibold">
-                          #
-                        </th>
-                        <th className="border-r border-border px-4 py-3 font-semibold">
-                          Email
-                        </th>
-                        <th className="w-56 border-r border-border px-4 py-3 font-semibold">
-                          Date
-                        </th>
-                        <th className="w-40 border-r border-border px-4 py-3 font-semibold">
-                          Time
-                        </th>
-                        <th className="w-24 px-4 py-3 font-semibold">Source</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {entries.map((entry, i) => {
-                        const d = new Date(entry.createdAt)
-                        const date = d.toLocaleDateString("en-GB", {
-                          day: "2-digit",
-                          month: "short",
-                          year: "numeric",
-                        })
-                        const time = d.toLocaleTimeString("en-GB", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                          second: "2-digit",
-                        })
-                        return (
-                          <tr
-                            key={`${entry.email}-${i}`}
-                            className="border-t border-border transition-colors hover:bg-faint"
-                          >
-                            <td className="border-r border-border px-4 py-3 text-xs text-placeholder tabular">
-                              {i + 1}
-                            </td>
-                            <td className="border-r border-border px-4 py-3 font-medium text-foreground">
-                              {entry.email}
-                            </td>
-                            <td className="border-r border-border px-4 py-3 text-muted-foreground tabular">
-                              {date}
-                            </td>
-                            <td className="mono border-r border-border px-4 py-3 text-muted-foreground tabular">
-                              {time}
-                            </td>
-                            <td className="px-4 py-3 text-muted-foreground">{entry.source}</td>
-                          </tr>
-                        )
-                      })}
-                    </tbody>
-                  </table>
+                <div className="mt-8 overflow-hidden rounded-xl border border-border bg-card">
+                  <div ref={scroller} className="tb-scroll" data-more={scroll.more} data-scrolled={scroll.scrolled}>
+                    <table className="tb-table w-full min-w-[560px] border-collapse text-left text-sm">
+                      <thead>
+                        <tr className="bg-muted text-xs font-medium text-muted-foreground">
+                          <th className="w-14 px-4 py-3 font-semibold">#</th>
+                          <th className="border-r border-divider px-4 py-3 font-semibold">
+                            Email
+                          </th>
+                          <th className="w-56 border-r border-divider px-4 py-3 font-semibold">
+                            Date
+                          </th>
+                          <th className="w-40 border-r border-divider px-4 py-3 font-semibold">
+                            Time
+                          </th>
+                          <th className="w-24 px-4 py-3 font-semibold">Source</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {entries.map((entry, i) => {
+                          const d = new Date(entry.createdAt)
+                          const date = d.toLocaleDateString("en-GB", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                          })
+                          const time = d.toLocaleTimeString("en-GB", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            second: "2-digit",
+                          })
+                          return (
+                            <tr key={`${entry.email}-${i}`} className="tb-row border-t border-divider">
+                              <td className="px-4 py-3 text-xs text-placeholder tabular">
+                                {i + 1}
+                              </td>
+                              <td className="border-r border-divider px-4 py-3 font-medium text-foreground">
+                                {entry.email}
+                              </td>
+                              <td className="border-r border-divider px-4 py-3 text-muted-foreground tabular">
+                                {date}
+                              </td>
+                              <td className="mono border-r border-divider px-4 py-3 text-muted-foreground tabular">
+                                {time}
+                              </td>
+                              <td className="px-4 py-3 text-muted-foreground">{entry.source}</td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               )}
             </>
