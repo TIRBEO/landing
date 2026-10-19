@@ -65,13 +65,13 @@ export default function ThankYouPage() {
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <Link
               href="/"
-              className="inline-flex h-11 items-center rounded-lg bg-accent-solid px-5 text-sm font-semibold text-accent-foreground transition-colors hover:bg-accent-solid-hover"
+              className="btn btn-primary"
             >
               Back to the site
             </Link>
             <Link
               href="/contact"
-              className="inline-flex h-11 items-center gap-1 rounded-lg border border-border px-5 text-sm font-medium transition-colors hover:border-border-strong hover:bg-fill"
+              className="btn btn-secondary"
             >
               Get in touch
               <ChevronRight className="size-4 text-placeholder" aria-hidden="true" />

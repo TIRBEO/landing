@@ -108,7 +108,7 @@ export function LoginModal({ onClose }: { onClose: () => void }) {
             window.location.href = signInUrl(window.location.href)
             close()
           }}
-          className="mt-6 inline-flex h-11 w-full items-center justify-center rounded-lg bg-accent-solid px-4 text-sm font-semibold text-accent-foreground transition-colors hover:bg-accent-solid-hover"
+          className="btn btn-primary btn-block mt-6"
         >
           Sign in at {accountsHost()}
         </a>
@@ -116,14 +116,14 @@ export function LoginModal({ onClose }: { onClose: () => void }) {
         <Link
           href="/#join"
           onClick={close}
-          className="mt-3 inline-flex h-11 w-full items-center justify-center rounded-lg border border-border px-4 text-sm font-medium transition-colors hover:border-border-strong hover:bg-fill"
+          className="btn btn-secondary btn-block mt-3"
         >
           Not joined yet — add my email to the list
         </Link>
 
         <button
           onClick={close}
-          className="mt-1 h-11 w-full rounded-lg text-sm text-muted-foreground transition-colors hover:bg-fill hover:text-foreground"
+          className="btn btn-quiet btn-block mt-1"
         >
           Cancel
         </button>

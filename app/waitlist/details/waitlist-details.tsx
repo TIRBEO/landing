@@ -172,14 +172,14 @@ export function WaitlistDetails({ turnstile }: { turnstile: TurnstileClientConfi
                 <button
                   onClick={exportCsv}
                   disabled={loading || entries.length === 0}
-                  className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border px-3 text-sm text-muted-foreground transition-colors hover:border-border-strong hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                  className="btn btn-secondary btn-sm"
                 >
                   <Download className="size-4" aria-hidden="true" />
                   Export CSV
                 </button>
                 <button
                   onClick={logout}
-                  className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border px-3 text-sm text-muted-foreground transition-colors hover:border-border-strong hover:text-foreground"
+                  className="btn btn-secondary btn-sm"
                 >
                   <LogOut className="size-4" aria-hidden="true" />
                   Log out
@@ -235,7 +235,7 @@ export function WaitlistDetails({ turnstile }: { turnstile: TurnstileClientConfi
               <button
                 type="submit"
                 disabled={captchaRequired && !captchaToken && !captchaFailure}
-                className="mt-4 inline-flex h-11 w-full items-center justify-center rounded-lg bg-accent-solid text-sm font-semibold text-accent-foreground transition-colors hover:bg-accent-solid-hover disabled:cursor-not-allowed disabled:opacity-50"
+                className="btn btn-primary btn-block mt-4"
               >
                 Unlock
               </button>
@@ -257,7 +257,7 @@ export function WaitlistDetails({ turnstile }: { turnstile: TurnstileClientConfi
                   <p className="mt-1 text-sm text-muted-foreground">{loadError}</p>
                   <button
                     onClick={() => setAuthed(false)}
-                    className="mt-5 inline-flex h-9 items-center rounded-lg border border-border px-4 text-sm text-muted-foreground transition-colors hover:border-border-strong hover:text-foreground"
+                    className="btn btn-secondary btn-sm mt-5"
                   >
                     Retry
                   </button>

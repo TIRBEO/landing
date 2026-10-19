@@ -33,20 +33,20 @@ export function Header() {
         <nav className="flex items-center gap-1 sm:gap-2" aria-label="Main">
           <Link
             href="/teams"
-            className="rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-fill hover:text-foreground"
+            className="btn btn-quiet btn-sm"
           >
             Teams
           </Link>
           <Link
             href="/contact"
-            className="rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-fill hover:text-foreground"
+            className="btn btn-quiet btn-sm"
           >
             Contact
           </Link>
           <ThemeToggle />
           <button
             onClick={() => setShowLoginModal(true)}
-            className="inline-flex h-9 items-center rounded-lg bg-accent-solid px-4 text-sm font-semibold text-accent-foreground transition-colors hover:bg-accent-solid-hover"
+            className="btn btn-primary btn-sm"
           >
             Log in
           </button>

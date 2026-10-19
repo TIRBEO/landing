@@ -44,6 +44,10 @@
   --scrim: rgb(0 0 0 / 62%);
   --field: #3a3a3c;
   --fill: rgba(120, 120, 128, 0.24);
+  --fill-hover: rgba(120, 120, 128, 0.34);
+  --fill-press: rgba(120, 120, 128, 0.42);
+  --btn-disabled-bg: rgba(255, 255, 255, 0.12);
+  --btn-disabled-fg: rgba(255, 255, 255, 0.45);
   --hairline: #38383a;
   --glass: rgba(28, 28, 30, 0.85);
   --glass-2: rgba(28, 28, 30, 0.94);
@@ -101,6 +105,10 @@
   --scrim: rgb(18 19 22 / 45%);
   --field: #ffffff;
   --fill: rgba(120, 120, 128, 0.16);
+  --fill-hover: rgba(120, 120, 128, 0.24);
+  --fill-press: rgba(120, 120, 128, 0.32);
+  --btn-disabled-bg: rgba(18, 19, 22, 0.08);
+  --btn-disabled-fg: rgba(18, 19, 22, 0.42);
   --hairline: #c6c6c8;
   --glass: rgba(255, 255, 255, 0.86);
   --glass-2: rgba(255, 255, 255, 0.95);
@@ -280,6 +288,100 @@
     animation-name: pop-out;
     animation-duration: 180ms;
   }
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────────
+   One recipe for every action on the site, because there were fourteen
+   hand-written ones: the pill the account surfaces use, with the fill
+   carrying the meaning. `--accent-solid` rather than `--accent` for the
+   primary — systemBlue under white text is 3.65:1, which fails AA.
+   The secondary is filled grey with an accent label, never an outline:
+   Apple draws the quiet action that way, and a grey-bordered pill beside
+   a blue one reads as a disabled pair.
+   Unlayered on purpose, so it wins over stray utilities and a button
+   cannot accidentally re-shape itself at a call site.
+   ───────────────────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 14.5px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 150ms ease, color 150ms ease, transform 150ms ease;
+}
+
+.btn:active {
+  transform: scale(0.995);
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+}
+
+/* A disabled fill is not an enabled one seen through glass — iOS mutes the
+   plate and the label. Half-transparent blue reads as "loading", not "off". */
+.btn-primary:disabled {
+  background: var(--btn-disabled-bg);
+  color: var(--btn-disabled-fg);
+}
+
+.btn-secondary:disabled,
+.btn-quiet:disabled {
+  opacity: 0.5;
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.btn-primary {
+  background: var(--accent-solid);
+  color: var(--accent-fg);
+}
+
+.btn-primary:hover {
+  background: var(--accent-solid-hover);
+}
+
+.btn-secondary {
+  background: var(--fill);
+  color: var(--accent-text);
+}
+
+.btn-secondary:hover {
+  background: var(--fill-hover);
+}
+
+/* Nav and dismiss affordances: no fill until you hover. */
+.btn-quiet {
+  background: transparent;
+  color: var(--muted);
+}
+
+.btn-quiet:hover {
+  background: var(--fill);
+  color: var(--fg);
+}
+
+/* The compact size for toolbar and nav-bar actions. */
+.btn-sm {
+  min-height: 36px;
+  padding: 0 14px;
+  font-size: 13.5px;
+}
+
+.btn-block {
+  width: 100%;
 }
 
 /* ── Data table ──────────────────────────────────────────────────────
