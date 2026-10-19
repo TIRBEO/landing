@@ -446,6 +446,38 @@
   background: var(--hover);
 }
 
+/* ── Loading ───────────────────────────────────────────────────────────
+   The fleet's one waiting language: a shimmer plate for content that
+   hasn't arrived (accounts, myprofile and social carry the same recipe)
+   and a 700ms spinner for work in flight. No border-radius on
+   .skeleton — it is unlayered, so a radius here would beat every
+   `rounded-*` utility at the call site. */
+.skeleton {
+  background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface-3) 37%, var(--surface-2) 63%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s linear infinite;
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin 700ms linear infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

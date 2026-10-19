@@ -250,7 +250,16 @@ export function WaitlistDetails({ turnstile }: { turnstile: TurnstileClientConfi
             <>
               {/* ── Spreadsheet-style table ── */}
               {loading ? (
-                <p className="mt-10 text-sm text-muted-foreground">Loading rows…</p>
+                /* The table's own plate, plated empty: same border, same
+                   row rhythm, so the rows arriving don't move the page. */
+                <div className="mt-8 rounded-xl border border-border bg-card p-4" aria-busy="true">
+                  <span className="sr-only">Loading rows…</span>
+                  <div className="space-y-3">
+                    {Array.from({ length: 6 }, (_, i) => (
+                      <div key={i} className="skeleton h-10 rounded-lg" />
+                    ))}
+                  </div>
+                </div>
               ) : loadError ? (
                 <div className="mt-8 rounded-xl border border-border bg-card p-10 text-center">
                   <p className="font-medium">Couldn&apos;t load rows</p>
