@@ -25,7 +25,8 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
-next-env.d.tstest-results
+next-env.d.ts
+test-results
 data/
 
 # 21st design cache
