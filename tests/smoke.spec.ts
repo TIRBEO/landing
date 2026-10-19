@@ -48,6 +48,8 @@ test.describe("landing page", () => {
 
     const confirmation = page.getByText(/you're on the list/i)
     const rateLimited = page.getByText(/too many/i)
+    // `/thank-you` says it, and the rate-limiter's own error means the form
+    // still reached the API — either is a pass.
     await expect(confirmation.or(rateLimited)).toBeVisible({ timeout: 10_000 })
   })
 })

@@ -6,7 +6,7 @@ import { Header } from "@/components/header"
 import { SiteFooter } from "@/components/site-footer"
 
 export const metadata: Metadata = {
-  title: "You're on the list",
+  title: "You’re on the list",
   description: "Thanks for joining the Tirbeo mailing list.",
   robots: { index: false, follow: false },
 }

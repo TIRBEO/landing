@@ -170,13 +170,13 @@ export function LandingPage({ turnstile }: { turnstile: TurnstileClientConfig })
                 // `captchaFailure` lifts the requirement.
                 (captchaRequired && !captchaToken && !captchaFailure)
               }
-              className="btn btn-primary btn-block mt-6"
+              className="btn btn-primary btn-block mt-6 h-14"
             >
               {status === "submitting" || status === "success" ? (
-                <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+                <Loader2 className="size-4 animate-spin-slow" aria-hidden="true" />
               ) : null}
               {status === "success"
-                ? "You're in"
+                ? "You’re in"
                 : status === "submitting"
                   ? "Adding you…"
                   : "Subscribe"}
